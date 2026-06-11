@@ -85,7 +85,7 @@ export const FuzzyMembershipExplorer = () => {
     const fetchMemberships = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:8001/knowledge/fuzzy/memberships?patient_id=${patientId}&variable=${variable}&function_type=${fnType}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/fuzzy/memberships?patient_id=${patientId}&variable=${variable}&function_type=${fnType}`);
         setMembershipData(res.data);
       } catch (err) {
         console.error('Error fetching memberships', err);

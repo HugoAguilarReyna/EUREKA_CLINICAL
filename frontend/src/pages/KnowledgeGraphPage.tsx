@@ -24,7 +24,7 @@ export const KnowledgeGraphPage = () => {
     // Fetch communities list for dropdown filtering (Level 2 Cohort filter)
     const fetchCommunities = async () => {
       try {
-        const res = await axios.get('http://localhost:8001/knowledge/cohorts/communities');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/cohorts/communities`);
         setCommunities(res.data || []);
       } catch (err) {
         console.error("Error loading communities:", err);
@@ -35,10 +35,10 @@ export const KnowledgeGraphPage = () => {
     // Epic 10.0A: Load patients and Level 1 nodes on mount
     const loadEntityOptions = async () => {
       try {
-        const patientsRes = await axios.get('http://localhost:8001/api/cases?limit=1000');
+        const patientsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/cases?limit=1000`);
         setPatients(patientsRes.data || []);
 
-        const l1Res = await axios.get('http://localhost:8001/knowledge/semantic/graph?level=1');
+        const l1Res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/semantic/graph?level=1`);
         setLevel1Nodes(l1Res.data.nodes || []);
       } catch (err) {
         console.error("Error loading entity options for Progressive Investigation:", err);

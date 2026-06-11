@@ -11,7 +11,7 @@ export const DataPreparationExplorer = () => {
   useEffect(() => {
     const fetchAudit = async () => {
       try {
-        const res = await axios.get('http://localhost:8001/knowledge/preparation/audit');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/preparation/audit`);
         setData(res.data);
       } catch (err) {
         setError('Error al cargar la auditoría de preparación de datos');

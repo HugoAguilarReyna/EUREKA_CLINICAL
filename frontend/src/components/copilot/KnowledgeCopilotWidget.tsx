@@ -37,7 +37,7 @@ export const KnowledgeCopilotWidget = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8001/knowledge/copilot/ask', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/knowledge/copilot/ask`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

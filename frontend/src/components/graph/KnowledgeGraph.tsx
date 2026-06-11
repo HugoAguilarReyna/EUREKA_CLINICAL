@@ -31,7 +31,7 @@ export const KnowledgeGraph = ({
       setLoading(true);
       setError(null);
       try {
-        let url = `http://localhost:8001/knowledge/semantic/graph?level=${level}`;
+        let url = `${import.meta.env.VITE_API_URL}/knowledge/semantic/graph?level=${level}`;
         
         if (level === 3) {
           if (entityId && entityType) {
@@ -70,7 +70,7 @@ export const KnowledgeGraph = ({
   // Epic 10.0A: Dynamic Node Expansion Merge Logic
   const handleNodeExpand = async (nodeId: string) => {
     try {
-      const url = `http://localhost:8001/knowledge/semantic/graph/expand?node_id=${nodeId}&depth=1`;
+      const url = `${import.meta.env.VITE_API_URL}/knowledge/semantic/graph/expand?node_id=${nodeId}&depth=1`;
       const res = await axios.get(url);
       
       if (res.data.warning || res.data.metadata?.warning) {

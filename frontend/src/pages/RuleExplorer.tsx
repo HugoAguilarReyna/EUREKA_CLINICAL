@@ -13,7 +13,7 @@ export const RuleExplorer = () => {
   useEffect(() => {
     const fetchRules = async () => {
       try {
-        const res = await axios.get('http://localhost:8001/knowledge/semantic/rules');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/semantic/rules`);
         setRules(res.data);
       } catch (err) {
         setError('Error al cargar las reglas expertas semánticas');

@@ -18,9 +18,9 @@ export const AssignmentRecoveryDashboard = () => {
     const fetchData = async () => {
       try {
         const [prepRes, rulesRes, summaryRes] = await Promise.all([
-          axios.get('http://localhost:8001/knowledge/preparation/audit'),
-          axios.get('http://localhost:8001/knowledge/semantic/rules'),
-          axios.get('http://localhost:8001/graph/analytics/summary')
+          axios.get(`${import.meta.env.VITE_API_URL}/knowledge/preparation/audit`),
+          axios.get(`${import.meta.env.VITE_API_URL}/knowledge/semantic/rules`),
+          axios.get(`${import.meta.env.VITE_API_URL}/graph/analytics/summary`)
         ]);
         setPrepData(prepRes.data);
         setRules(rulesRes.data);
@@ -37,7 +37,7 @@ export const AssignmentRecoveryDashboard = () => {
   const handleCertify = async () => {
     setCertifying(true);
     try {
-      const res = await axios.post('http://localhost:8001/knowledge/semantic/certify');
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/knowledge/semantic/certify`);
       setCertResult(res.data);
     } catch (err) {
       console.error("Certification failed", err);

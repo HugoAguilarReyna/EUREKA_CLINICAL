@@ -14,7 +14,7 @@ export const PatientSimilarityExplorer = () => {
     // Fetch patient list
     const fetchPatients = async () => {
       try {
-        const res = await axios.get('http://localhost:8001/api/cases');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/cases`);
         // Retrieve patient IDs
         const ids = (res.data || []).map((c: any) => c.patient_id).filter(Boolean);
         setPatients(ids);
@@ -35,7 +35,7 @@ export const PatientSimilarityExplorer = () => {
     const fetchSimilarity = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:8001/knowledge/cohorts/similarity/${selectedPatient}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/cohorts/similarity/${selectedPatient}`);
         setNeighbors(res.data || []);
       } catch (err) {
         console.error("Error computing similarity:", err);

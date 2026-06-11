@@ -11,7 +11,7 @@ export const RiskPropagationExplorer = () => {
   useEffect(() => {
     const fetchSankey = async () => {
       try {
-        const res = await axios.get('http://localhost:8001/knowledge/sankey/propagation');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/sankey/propagation`);
         setData(res.data || { nodes: [], links: [] });
       } catch (err) {
         console.error("Error loading sankey data:", err);

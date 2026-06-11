@@ -9,7 +9,7 @@ export const TrendAnalytics = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8001/knowledge/datasets/history')
+    fetch(`${import.meta.env.VITE_API_URL}/knowledge/datasets/history`)
       .then(res => res.json())
       .then(data => {
         // Reverse to have oldest first for timeline graphs

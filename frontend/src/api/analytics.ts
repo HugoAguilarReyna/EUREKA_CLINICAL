@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { KnowledgeAssetScore, InfluenceDTO, GraphAnalyticsSummary } from '../types/analytics';
 
-const API_BASE = 'http://localhost:8001/graph/analytics';
+const API_BASE = `${import.meta.env.VITE_API_URL}/graph/analytics`;
 
 export const getCentrality = async (): Promise<KnowledgeAssetScore[]> => {
   const { data } = await axios.get(`${API_BASE}/centrality`);
@@ -24,17 +24,17 @@ export const getTopAssets = async (): Promise<KnowledgeAssetScore[]> => {
 };
 
 export const getDecisionInsights = async (): Promise<any[]> => {
-  const { data } = await axios.get('http://localhost:8001/knowledge/intelligence/insights');
+  const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/intelligence/insights`);
   return data;
 };
 
 export const getMinedRules = async (): Promise<any[]> => {
-  const { data } = await axios.get('http://localhost:8001/knowledge/intelligence/rules');
+  const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/intelligence/rules`);
   return data;
 };
 
 export const runSimulation = async (iqrMultiplier: number, scenario: string = 'outlier_trim'): Promise<any> => {
-  const { data } = await axios.get(`http://localhost:8001/knowledge/intelligence/simulate?scenario=${scenario}&iqr_multiplier=${iqrMultiplier}`);
+  const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/intelligence/simulate?scenario=${scenario}&iqr_multiplier=${iqrMultiplier}`);
   return data;
 };
 

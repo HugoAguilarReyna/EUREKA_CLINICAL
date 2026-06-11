@@ -2,7 +2,7 @@ import axios from 'axios';
 import { GraphPath } from '../types/graph';
 import { ExplainabilityDTO, TraceabilityDTO } from '../types/analytics';
 
-const API_BASE = 'http://localhost:8001/graph';
+const API_BASE = `${import.meta.env.VITE_API_URL}/graph`;
 
 export const getAsset = async (assetId: string) => {
   const { data } = await axios.get(`${API_BASE}/assets/${assetId}`);
@@ -11,7 +11,7 @@ export const getAsset = async (assetId: string) => {
 
 export const getExplainability = async (caseId: string): Promise<any> => {
   if (caseId.startsWith('Patient')) {
-    const { data } = await axios.get(`http://localhost:8001/knowledge/explain/${caseId}`);
+    const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/explain/${caseId}`);
     return data;
   }
   const { data } = await axios.get(`${API_BASE}/explain/${caseId}`);
@@ -20,7 +20,7 @@ export const getExplainability = async (caseId: string): Promise<any> => {
 
 export const getTraceability = async (assetId: string): Promise<any> => {
   if (assetId.startsWith('Patient')) {
-    const { data } = await axios.get(`http://localhost:8001/knowledge/trace/${assetId}`);
+    const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/trace/${assetId}`);
     return data;
   }
   const { data } = await axios.get(`${API_BASE}/trace/${assetId}`);
@@ -33,7 +33,7 @@ export const getStructuralTraceability = async (assetId: string): Promise<any> =
 };
 
 export const getNodeProvenance = async (nodeId: string): Promise<any> => {
-  const { data } = await axios.get(`http://localhost:8001/knowledge/provenance/${nodeId}`);
+  const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/provenance/${nodeId}`);
   return data;
 };
 

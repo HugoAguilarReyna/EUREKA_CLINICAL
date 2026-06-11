@@ -14,8 +14,8 @@ export const DashboardPage = () => {
     const fetchData = async () => {
       try {
         const [latestRes, compareRes] = await Promise.all([
-          fetch('http://localhost:8001/knowledge/datasets/latest'),
-          fetch('http://localhost:8001/knowledge/compare/latest')
+          fetch(`${import.meta.env.VITE_API_URL}/knowledge/datasets/latest`),
+          fetch(`${import.meta.env.VITE_API_URL}/knowledge/compare/latest`)
         ]);
         
         if (latestRes.ok) setLatest(await latestRes.json());
@@ -46,7 +46,7 @@ export const DashboardPage = () => {
   const healthScore = Math.max(0, 100 - (activeAlerts * 5));
 
   const handleDownloadPDF = () => {
-    window.open('http://localhost:8001/knowledge/reports/executive-pdf', '_blank');
+    window.open(`${import.meta.env.VITE_API_URL}/knowledge/reports/executive-pdf`, '_blank');
   };
 
   return (

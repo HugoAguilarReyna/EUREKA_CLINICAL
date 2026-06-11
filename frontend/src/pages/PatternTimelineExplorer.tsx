@@ -10,7 +10,7 @@ export const PatternTimelineExplorer = () => {
   useEffect(() => {
     const fetchTimeline = async () => {
       try {
-        const res = await axios.get('http://localhost:8001/knowledge/patterns/timeline');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/patterns/timeline`);
         setTimeline(res.data || []);
       } catch (err) {
         console.error("Error loading patterns timeline:", err);

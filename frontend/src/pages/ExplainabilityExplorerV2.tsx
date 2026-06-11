@@ -15,7 +15,7 @@ export const ExplainabilityExplorerV2 = () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await axios.get(`http://localhost:8001/knowledge/explain-v2/${patientId}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/explain-v2/${patientId}`);
         setExplanation(res.data);
       } catch (err) {
         console.error(err);

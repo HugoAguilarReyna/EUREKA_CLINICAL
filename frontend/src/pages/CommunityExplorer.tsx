@@ -12,7 +12,7 @@ export const CommunityExplorer = () => {
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        const res = await axios.get('http://localhost:8001/knowledge/cohorts/communities');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/cohorts/communities`);
         setCommunities(res.data || []);
       } catch (err) {
         console.error("Error fetching communities:", err);
