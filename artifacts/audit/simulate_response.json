@@ -1,0 +1,68 @@
+{
+  "scenario_name": "Scenario 1: IQR Outlier Trim",
+  "expected_change": "Eliminación de outliers clínicos usando un umbral IQR de 1.5x.",
+  "expected_risk": "La prevalencia de enfermedad hepática cambia de 71.4% a 57.5%.",
+  "expected_impact": "Se descartaron 265 pacientes con valores extremos atípicos.",
+  "baseline_sample_size": 583,
+  "simulated_sample_size": 318,
+  "outliers_removed": 265,
+  "iqr_multiplier_used": 1.5,
+  "correlation_comparison": [
+    {
+      "variable": "DB",
+      "display_name": "Direct Bilirubin",
+      "baseline_correlation": 0.246,
+      "simulated_correlation": 0.0752,
+      "correlation_shift": -0.1708
+    },
+    {
+      "variable": "TB",
+      "display_name": "Total Bilirubin",
+      "baseline_correlation": 0.2202,
+      "simulated_correlation": 0.0883,
+      "correlation_shift": -0.1319
+    },
+    {
+      "variable": "A/G Ratio",
+      "display_name": "Albumin/Globulin Ratio",
+      "baseline_correlation": -0.1631,
+      "simulated_correlation": -0.0551,
+      "correlation_shift": 0.1081
+    },
+    {
+      "variable": "ALB",
+      "display_name": "Albumin",
+      "baseline_correlation": -0.1614,
+      "simulated_correlation": -0.067,
+      "correlation_shift": 0.0944
+    },
+    {
+      "variable": "Sgpt",
+      "display_name": "ALT (Alanine Aminotransferase)",
+      "baseline_correlation": 0.1634,
+      "simulated_correlation": 0.0882,
+      "correlation_shift": -0.0752
+    },
+    {
+      "variable": "Alkphos",
+      "display_name": "Alkaline Phosphatase",
+      "baseline_correlation": 0.1849,
+      "simulated_correlation": 0.1113,
+      "correlation_shift": -0.0735
+    },
+    {
+      "variable": "Sgot",
+      "display_name": "AST (Aspartate Aminotransferase)",
+      "baseline_correlation": 0.1519,
+      "simulated_correlation": 0.0805,
+      "correlation_shift": -0.0714
+    },
+    {
+      "variable": "TP",
+      "display_name": "Total Proteins",
+      "baseline_correlation": -0.035,
+      "simulated_correlation": -0.0316,
+      "correlation_shift": 0.0034
+    }
+  ]
+}

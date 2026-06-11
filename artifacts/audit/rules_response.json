@@ -1,0 +1,121 @@
+[
+  {
+    "id": "RULE_1_A/G Ratio_LOW",
+    "expression": "A/G Ratio < 0.7",
+    "conditions": [
+      {
+        "variable": "A/G Ratio",
+        "op": "<",
+        "val": 0.7
+      }
+    ],
+    "target_class": "Liver Disease",
+    "lift": 1.2136201427438542,
+    "support": 0.16638078902229847,
+    "confidence": 0.865979381443299,
+    "affected_count": 97,
+    "rule_status": "ACTIVE"
+  },
+  {
+    "id": "RULE_2_ALB_LOW",
+    "expression": "ALB < 2.6",
+    "conditions": [
+      {
+        "variable": "ALB",
+        "op": "<",
+        "val": 2.6
+      }
+    ],
+    "target_class": "Liver Disease",
+    "lift": 1.1090550636413945,
+    "support": 0.23842195540308747,
+    "confidence": 0.7913669064748201,
+    "affected_count": 139,
+    "rule_status": "ACTIVE"
+  },
+  {
+    "id": "RULE_3_Alkphos_HIGH",
+    "expression": "Alkphos > 298.0",
+    "conditions": [
+      {
+        "variable": "Alkphos",
+        "op": ">",
+        "val": 298.0
+      }
+    ],
+    "target_class": "Liver Disease",
+    "lift": 1.1796312949640289,
+    "support": 0.23842195540308747,
+    "confidence": 0.841726618705036,
+    "affected_count": 139,
+    "rule_status": "ACTIVE"
+  },
+  {
+    "id": "RULE_4_DB_HIGH",
+    "expression": "DB > 1.3",
+    "conditions": [
+      {
+        "variable": "DB",
+        "op": ">",
+        "val": 1.3
+      }
+    ],
+    "target_class": "Liver Disease",
+    "lift": 1.3293092477375565,
+    "support": 0.2332761578044597,
+    "confidence": 0.9485294117647058,
+    "affected_count": 136,
+    "rule_status": "ACTIVE"
+  },
+  {
+    "id": "RULE_5_Sgot_HIGH",
+    "expression": "Sgot > 87.0",
+    "conditions": [
+      {
+        "variable": "Sgot",
+        "op": ">",
+        "val": 87.0
+      }
+    ],
+    "target_class": "Liver Disease",
+    "lift": 1.2651909722222223,
+    "support": 0.2469982847341338,
+    "confidence": 0.9027777777777778,
+    "affected_count": 144,
+    "rule_status": "ACTIVE"
+  },
+  {
+    "id": "RULE_6_Sgpt_HIGH",
+    "expression": "Sgpt > 60.5",
+    "conditions": [
+      {
+        "variable": "Sgpt",
+        "op": ">",
+        "val": 60.5
+      }
+    ],
+    "target_class": "Liver Disease",
+    "lift": 1.2766563487881981,
+    "support": 0.2504288164665523,
+    "confidence": 0.910958904109589,
+    "affected_count": 146,
+    "rule_status": "ACTIVE"
+  },
+  {
+    "id": "RULE_7_TB_HIGH",
+    "expression": "TB > 2.6",
+    "conditions": [
+      {
+        "variable": "TB",
+        "op": ">",
+        "val": 2.6
+      }
+    ],
+    "target_class": "Liver Disease",
+    "lift": 1.3235844017094016,
+    "support": 0.2469982847341338,
+    "confidence": 0.9444444444444444,
+    "affected_count": 144,
+    "rule_status": "ACTIVE"
+  }
+]

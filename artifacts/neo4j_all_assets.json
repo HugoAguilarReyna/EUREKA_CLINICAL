@@ -1,0 +1,15 @@
+{
+  "query": "MATCH (n:KnowledgeAsset) RETURN n LIMIT 5",
+  "results": [
+    {
+      "node_type": "E2ETestPattern",
+      "updated_at": "2026-06-04T04:25:28.803000",
+      "confidence": 0.99,
+      "created_at": "2026-06-04T04:25:28.803000",
+      "id": "e2e_asset_bf58d9eb",
+      "clinical_relevance": "critical",
+      "reuse_count": 0,
+      "status": "ACTIVE"
+    }
+  ]
+}

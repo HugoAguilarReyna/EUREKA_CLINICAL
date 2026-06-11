@@ -1,0 +1,276 @@
+{
+  "patient_id": "Patient_5",
+  "classification": "Liver Disease",
+  "confidence": 0.65,
+  "confidence_pct": "65%",
+  "layers": {
+    "1_source_data": [
+      {
+        "layer": 1,
+        "layer_name": "Source Data",
+        "variable": "A/G Ratio",
+        "display": "A/G Ratio",
+        "value": "1.3",
+        "note": "Medición clínica directa del dataset"
+      },
+      {
+        "layer": 1,
+        "layer_name": "Source Data",
+        "variable": "ALB",
+        "display": "Albumin",
+        "value": "4.4 g/dL",
+        "note": "Medición clínica directa del dataset"
+      },
+      {
+        "layer": 1,
+        "layer_name": "Source Data",
+        "variable": "Alkphos",
+        "display": "Alkaline Phosphatase",
+        "value": "208 IU/L",
+        "note": "Medición clínica directa del dataset"
+      },
+      {
+        "layer": 1,
+        "layer_name": "Source Data",
+        "variable": "DB",
+        "display": "Direct Bilirubin",
+        "value": "0.7 mg/dL",
+        "note": "Medición clínica directa del dataset"
+      },
+      {
+        "layer": 1,
+        "layer_name": "Source Data",
+        "variable": "Sgot",
+        "display": "Aspartate Aminotransferase",
+        "value": "14 IU/L",
+        "note": "Medición clínica directa del dataset"
+      },
+      {
+        "layer": 1,
+        "layer_name": "Source Data",
+        "variable": "Sgpt",
+        "display": "Alamine Aminotransferase",
+        "value": "19 IU/L",
+        "note": "Medición clínica directa del dataset"
+      },
+      {
+        "layer": 1,
+        "layer_name": "Source Data",
+        "variable": "TB",
+        "display": "Total Bilirubin",
+        "value": "1.8 mg/dL",
+        "note": "Medición clínica directa del dataset"
+      },
+      {
+        "layer": 1,
+        "layer_name": "Source Data",
+        "variable": "TP",
+        "display": "Total Proteins",
+        "value": "7.6 g/dL",
+        "note": "Medición clínica directa del dataset"
+      }
+    ],
+    "2_interpretation": [
+      {
+        "layer": 2,
+        "layer_name": "Interpretation",
+        "variable": "A/G Ratio",
+        "display": "Albumin/Globulin Ratio",
+        "value": "1.3",
+        "status": "HIGH",
+        "note": "Valor > umbral P75 (1.1)"
+      },
+      {
+        "layer": 2,
+        "layer_name": "Interpretation",
+        "variable": "ALB",
+        "display": "Albumin",
+        "value": "4.4 g/dL",
+        "status": "HIGH",
+        "note": "Valor > umbral P75 (3.8)"
+      },
+      {
+        "layer": 2,
+        "layer_name": "Interpretation",
+        "variable": "Alkphos",
+        "display": "Alkaline Phosphatase",
+        "value": "208 IU/L",
+        "status": "NORMAL",
+        "note": "Dentro del rango esperado"
+      },
+      {
+        "layer": 2,
+        "layer_name": "Interpretation",
+        "variable": "DB",
+        "display": "Direct Bilirubin",
+        "value": "0.7 mg/dL",
+        "status": "NORMAL",
+        "note": "Dentro del rango esperado"
+      },
+      {
+        "layer": 2,
+        "layer_name": "Interpretation",
+        "variable": "Sgot",
+        "display": "AST (Aspartate Aminotransferase)",
+        "value": "14 IU/L",
+        "status": "LOW",
+        "note": "Valor < umbral P25 (25.0)"
+      },
+      {
+        "layer": 2,
+        "layer_name": "Interpretation",
+        "variable": "Sgpt",
+        "display": "ALT (Alanine Aminotransferase)",
+        "value": "19 IU/L",
+        "status": "LOW",
+        "note": "Valor < umbral P25 (23.0)"
+      },
+      {
+        "layer": 2,
+        "layer_name": "Interpretation",
+        "variable": "TB",
+        "display": "Total Bilirubin",
+        "value": "1.8 mg/dL",
+        "status": "NORMAL",
+        "note": "Dentro del rango esperado"
+      },
+      {
+        "layer": 2,
+        "layer_name": "Interpretation",
+        "variable": "TP",
+        "display": "Total Proteins",
+        "value": "7.6 g/dL",
+        "status": "HIGH",
+        "note": "Valor > umbral P75 (7.2)"
+      }
+    ],
+    "3_clinical_states": [
+      {
+        "layer": 3,
+        "layer_name": "Clinical State",
+        "variable": "Sgpt",
+        "display": "ALT (Alanine Aminotransferase)",
+        "state": "Low Sgpt",
+        "value": "19.0 IU/L",
+        "threshold": 23.0,
+        "note": "Estado clínico activado (umbral 23.0)"
+      },
+      {
+        "layer": 3,
+        "layer_name": "Clinical State",
+        "variable": "A/G Ratio",
+        "display": "Albumin/Globulin Ratio",
+        "state": "High A/G Ratio",
+        "value": "1.3",
+        "threshold": 1.1,
+        "note": "Estado clínico activado (umbral 1.1)"
+      },
+      {
+        "layer": 3,
+        "layer_name": "Clinical State",
+        "variable": "ALB",
+        "display": "Albumin",
+        "state": "High ALB",
+        "value": "4.4 g/dL",
+        "threshold": 3.8,
+        "note": "Estado clínico activado (umbral 3.8)"
+      },
+      {
+        "layer": 3,
+        "layer_name": "Clinical State",
+        "variable": "Sgot",
+        "display": "AST (Aspartate Aminotransferase)",
+        "state": "Low Sgot",
+        "value": "14.0 IU/L",
+        "threshold": 25.0,
+        "note": "Estado clínico activado (umbral 25.0)"
+      },
+      {
+        "layer": 3,
+        "layer_name": "Clinical State",
+        "variable": "TP",
+        "display": "Total Proteins",
+        "state": "High TP",
+        "value": "7.6 g/dL",
+        "threshold": 7.2,
+        "note": "Estado clínico activado (umbral 7.2)"
+      }
+    ],
+    "4_associations": [
+      {
+        "layer": 4,
+        "layer_name": "Disease Association",
+        "variable": "Sgpt",
+        "display": "ALT (Alanine Aminotransferase)",
+        "disease_rate": "56.8%",
+        "sample_count": 139,
+        "correlation": 0.1634,
+        "clinical_context": "Asociación fuerte con la variable objetivo.",
+        "note": "56.8% de los pacientes con este estado tienen enfermedad"
+      },
+      {
+        "layer": 4,
+        "layer_name": "Disease Association",
+        "variable": "A/G Ratio",
+        "display": "Albumin/Globulin Ratio",
+        "disease_rate": "58.7%",
+        "sample_count": 126,
+        "correlation": 0.1631,
+        "clinical_context": "Asociación fuerte con la variable objetivo.",
+        "note": "58.7% de los pacientes con este estado tienen enfermedad"
+      },
+      {
+        "layer": 4,
+        "layer_name": "Disease Association",
+        "variable": "ALB",
+        "display": "Albumin",
+        "disease_rate": "61.2%",
+        "sample_count": 134,
+        "correlation": 0.1614,
+        "clinical_context": "Asociación fuerte con la variable objetivo.",
+        "note": "61.2% de los pacientes con este estado tienen enfermedad"
+      },
+      {
+        "layer": 4,
+        "layer_name": "Disease Association",
+        "variable": "Sgot",
+        "display": "AST (Aspartate Aminotransferase)",
+        "disease_rate": "53.7%",
+        "sample_count": 136,
+        "correlation": 0.1519,
+        "clinical_context": "Asociación fuerte con la variable objetivo.",
+        "note": "53.7% de los pacientes con este estado tienen enfermedad"
+      },
+      {
+        "layer": 4,
+        "layer_name": "Disease Association",
+        "variable": "TP",
+        "display": "Total Proteins",
+        "disease_rate": "67.2%",
+        "sample_count": 134,
+        "correlation": 0.035,
+        "clinical_context": "Asociación fuerte con la variable objetivo.",
+        "note": "67.2% de los pacientes con este estado tienen enfermedad"
+      }
+    ],
+    "5_prediction": [
+      {
+        "layer": 5,
+        "layer_name": "Prediction",
+        "classification": "Liver Disease",
+        "confidence": 0.65,
+        "confidence_pct": "65%",
+        "factors_used": 5,
+        "note": "Basado en 5 factores clínicos relevantes"
+      }
+    ]
+  },
+  "narrative": "El análisis causal identifica como principal hallazgo que el paciente presenta ALT (Alanine Aminotransferase) reducida (19.0 IU/L), respaldado por una evidencia de 139 casos clínicos en el subgrupo. Esta variable influye directamente en el diagnóstico de 'Liver Disease' con un nivel de confianza del 65%, sugiriendo como siguiente acción de investigación: 'Siguiente análisis sugerido: Revisar pacientes con valores inferiores al percentil 25 de ALT (Alanine Aminotransferase).'.",
+  "ascii_diagram": "DECISION PATH: Patient_5 -> Liver Disease\n=======================================================\n\n--- RUTA DE INFERENCIA CLÍNICA #1 ---\n  [Hallazgo: ALT (Alanine Aminotransferase) reducida]\n         ↓\n  [Evidencia: 139 casos observados en subgrupo]\n         ↓\n  [Variable: ALT (Alanine Aminotransferase) = 19.0 IU/L]\n         ↓\n  [Paciente: Patient_5]\n         ↓\n  [Conclusión: Liver Disease (Confianza: 65.0%)]\n\n--- RUTA DE INFERENCIA CLÍNICA #2 ---\n  [Hallazgo: Albumin/Globulin Ratio elevada]\n         ↓\n  [Evidencia: 126 casos observados en subgrupo]\n         ↓\n  [Variable: Albumin/Globulin Ratio = 1.3 ]\n         ↓\n  [Paciente: Patient_5]\n         ↓\n  [Conclusión: Liver Disease (Confianza: 65.0%)]\n\n--- RUTA DE INFERENCIA CLÍNICA #3 ---\n  [Hallazgo: Albumin elevada]\n         ↓\n  [Evidencia: 134 casos observados en subgrupo]\n         ↓\n  [Variable: Albumin = 4.4 g/dL]\n         ↓\n  [Paciente: Patient_5]\n         ↓\n  [Conclusión: Liver Disease (Confianza: 65.0%)]",
+  "summary": {
+    "source_measurements": 8,
+    "abnormal_values": 5,
+    "clinical_states_activated": 5,
+    "disease_associations": 5
+  }
+}

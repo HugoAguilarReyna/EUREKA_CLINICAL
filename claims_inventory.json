@@ -1,0 +1,242 @@
+[
+  {
+    "source": "Insight Engine",
+    "text": "136 pacientes presentan Bilirrubina Directa elevada",
+    "type": "statistical_claim",
+    "raw": {
+      "finding": "136 pacientes presentan Bilirrubina Directa elevada",
+      "explanation": "La elevaci\u00f3n de Bilirrubina Directa indica alta probabilidad de colestasis obstructiva intrahep\u00e1tica o extrahep\u00e1tica.",
+      "impact": "23.3% de la poblaci\u00f3n",
+      "confidence": 94.9,
+      "evidence": [
+        "DB > P75",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Priorizar evaluaci\u00f3n hepatobiliar por sospecha de obstrucci\u00f3n",
+      "urgency": "CRITICAL",
+      "affected_population": 142,
+      "id": "INSIGHT_4_DB_HIGH",
+      "title": "Riesgo Elevado: Bilirrubina Directa Alto",
+      "why_care": "Los pacientes con esta caracter\u00edstica aparecen 7.4 veces m\u00e1s frecuentemente en la poblaci\u00f3n con enfermedad que en la poblaci\u00f3n sana.",
+      "severity": "CRITICAL",
+      "next_analysis_suggested": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis.",
+      "sample_size": 583,
+      "evidence_count": 136,
+      "method": "Correlaci\u00f3n y Descubrimiento de Subgrupos",
+      "priority": 5.4443,
+      "supporting_variables": [
+        "DB"
+      ]
+    }
+  },
+  {
+    "source": "Insight Engine",
+    "text": "144 pacientes presentan Bilirrubina Total elevada",
+    "type": "statistical_claim",
+    "raw": {
+      "finding": "144 pacientes presentan Bilirrubina Total elevada",
+      "explanation": "La elevaci\u00f3n de Bilirrubina Total est\u00e1 asociada a ictericia hep\u00e1tica y da\u00f1o de v\u00edas biliares.",
+      "impact": "24.7% de la poblaci\u00f3n",
+      "confidence": 94.4,
+      "evidence": [
+        "TB > P75",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Evaluar sospecha de ictericia hep\u00e1tica o colestasis",
+      "urgency": "CRITICAL",
+      "affected_population": 144,
+      "id": "INSIGHT_7_TB_HIGH",
+      "title": "Riesgo Elevado: Bilirrubina Total Alto",
+      "why_care": "Los pacientes con esta caracter\u00edstica aparecen 6.8 veces m\u00e1s frecuentemente en la poblaci\u00f3n con enfermedad que en la poblaci\u00f3n sana.",
+      "severity": "CRITICAL",
+      "next_analysis_suggested": "Revisar pacientes con valores de Bilirrubina Total superiores al percentil 75 (> 2.6 mg/dL) para evaluar sospecha de ictericia hep\u00e1tica.",
+      "sample_size": 583,
+      "evidence_count": 144,
+      "method": "Correlaci\u00f3n y Descubrimiento de Subgrupos",
+      "priority": 5.1369,
+      "supporting_variables": [
+        "TB"
+      ]
+    }
+  },
+  {
+    "source": "Insight Engine",
+    "text": "146 pacientes presentan ALT (Alanina Aminotransferasa) elevada",
+    "type": "statistical_claim",
+    "raw": {
+      "finding": "146 pacientes presentan ALT (Alanina Aminotransferasa) elevada",
+      "explanation": "La elevaci\u00f3n de ALT (Alanina Aminotransferasa) es un indicador directo y espec\u00edfico de lesi\u00f3n y necrosis hepatocelular activa.",
+      "impact": "25.0% de la poblaci\u00f3n",
+      "confidence": 91.1,
+      "evidence": [
+        "Sgpt > P75",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Evaluar necrosis hepatocelular activa aguda",
+      "urgency": "CRITICAL",
+      "affected_population": 146,
+      "id": "INSIGHT_6_Sgpt_HIGH",
+      "title": "Riesgo Elevado: ALT (Alanina Aminotransferasa) Alto",
+      "why_care": "Los pacientes con esta caracter\u00edstica aparecen 4.1 veces m\u00e1s frecuentemente en la poblaci\u00f3n con enfermedad que en la poblaci\u00f3n sana.",
+      "severity": "CRITICAL",
+      "next_analysis_suggested": "Revisar pacientes con transaminasa ALT/SGPT elevada (> 60.5 IU/L) para evaluar grado de necrosis hepatocelular activa.",
+      "sample_size": 583,
+      "evidence_count": 146,
+      "method": "Correlaci\u00f3n y Descubrimiento de Subgrupos",
+      "priority": 3.728,
+      "supporting_variables": [
+        "Sgpt"
+      ]
+    }
+  },
+  {
+    "source": "Insight Engine",
+    "text": "139 pacientes presentan Fosfatasa Alcalina elevada",
+    "type": "statistical_claim",
+    "raw": {
+      "finding": "139 pacientes presentan Fosfatasa Alcalina elevada",
+      "explanation": "La elevaci\u00f3n de Fosfatasa Alcalina sugiere compromiso obstructivo de v\u00edas biliares o enfermedad \u00f3sea.",
+      "impact": "23.8% de la poblaci\u00f3n",
+      "confidence": 84.2,
+      "evidence": [
+        "Alkphos > P75",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Descartar compromiso de v\u00edas biliares e infiltraci\u00f3n",
+      "urgency": "HIGH",
+      "affected_population": 139,
+      "id": "INSIGHT_3_Alkphos_HIGH",
+      "title": "Riesgo Elevado: Fosfatasa Alcalina Alto",
+      "why_care": "Los pacientes con esta caracter\u00edstica aparecen 2.1 veces m\u00e1s frecuentemente en la poblaci\u00f3n con enfermedad que en la poblaci\u00f3n sana.",
+      "severity": "HIGH",
+      "next_analysis_suggested": "Revisar pacientes con Fosfatasa Alcalina elevada (> 298.0 IU/L) para descartar posible compromiso de v\u00edas biliares o infiltraci\u00f3n hep\u00e1tica.",
+      "sample_size": 583,
+      "evidence_count": 139,
+      "method": "Correlaci\u00f3n y Descubrimiento de Subgrupos",
+      "priority": 3.71,
+      "supporting_variables": [
+        "Alkphos"
+      ]
+    }
+  },
+  {
+    "source": "Insight Engine",
+    "text": "144 pacientes presentan AST (Aspartato Aminotransferasa) elevada",
+    "type": "statistical_claim",
+    "raw": {
+      "finding": "144 pacientes presentan AST (Aspartato Aminotransferasa) elevada",
+      "explanation": "La elevaci\u00f3n de AST (Aspartato Aminotransferasa) indica necrosis de tejidos blandos y lesi\u00f3n hepatocelular concomitante.",
+      "impact": "24.7% de la poblaci\u00f3n",
+      "confidence": 90.3,
+      "evidence": [
+        "Sgot > P75",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Valorar da\u00f1o tisular hep\u00e1tico y muscular",
+      "urgency": "CRITICAL",
+      "affected_population": 144,
+      "id": "INSIGHT_5_Sgot_HIGH",
+      "title": "Riesgo Elevado: AST (Aspartato Aminotransferasa) Alto",
+      "why_care": "Los pacientes con esta caracter\u00edstica aparecen 3.7 veces m\u00e1s frecuentemente en la poblaci\u00f3n con enfermedad que en la poblaci\u00f3n sana.",
+      "severity": "CRITICAL",
+      "next_analysis_suggested": "Revisar pacientes con transaminasa AST/SGOT elevada (> 87.0 IU/L) para valorar sospecha de da\u00f1o hep\u00e1tico o mioc\u00e1rdico concomitante.",
+      "sample_size": 583,
+      "evidence_count": 144,
+      "method": "Correlaci\u00f3n y Descubrimiento de Subgrupos",
+      "priority": 3.3879,
+      "supporting_variables": [
+        "Sgot"
+      ]
+    }
+  },
+  {
+    "source": "Insight Engine",
+    "text": "139 pacientes presentan Alb\u00famina reducida",
+    "type": "statistical_claim",
+    "raw": {
+      "finding": "139 pacientes presentan Alb\u00famina reducida",
+      "explanation": "La reducci\u00f3n de Alb\u00famina indica un deterioro en la funci\u00f3n de s\u00edntesis de prote\u00ednas del h\u00edgado o malabsorci\u00f3n.",
+      "impact": "23.8% de la poblaci\u00f3n",
+      "confidence": 79.1,
+      "evidence": [
+        "ALB < P25",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Revisar funci\u00f3n de s\u00edntesis hep\u00e1tica y nutricional",
+      "urgency": "HIGH",
+      "affected_population": 139,
+      "id": "INSIGHT_2_ALB_LOW",
+      "title": "Riesgo Elevado: Alb\u00famina Bajo",
+      "why_care": "Los pacientes con esta caracter\u00edstica aparecen 1.5 veces m\u00e1s frecuentemente en la poblaci\u00f3n con enfermedad que en la poblaci\u00f3n sana.",
+      "severity": "HIGH",
+      "next_analysis_suggested": "Revisar pacientes con Alb\u00famina alta (> 3.8 g/dL).",
+      "sample_size": 583,
+      "evidence_count": 139,
+      "method": "Correlaci\u00f3n y Descubrimiento de Subgrupos",
+      "priority": 3.0451,
+      "supporting_variables": [
+        "ALB"
+      ]
+    }
+  },
+  {
+    "source": "Insight Engine",
+    "text": "97 pacientes presentan Relaci\u00f3n Alb\u00famina/Globulina reducida",
+    "type": "statistical_claim",
+    "raw": {
+      "finding": "97 pacientes presentan Relaci\u00f3n Alb\u00famina/Globulina reducida",
+      "explanation": "Una relaci\u00f3n A/G baja est\u00e1 altamente asociada a procesos inflamatorios cr\u00f3nicos o cirrosis avanzada.",
+      "impact": "16.6% de la poblaci\u00f3n",
+      "confidence": 86.6,
+      "evidence": [
+        "A/G Ratio < P25",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Descartar cirrosis y procesos inflamatorios cr\u00f3nicos",
+      "urgency": "CRITICAL",
+      "affected_population": 97,
+      "id": "INSIGHT_1_A/G Ratio_LOW",
+      "title": "Riesgo Elevado: Relaci\u00f3n Alb\u00famina/Globulina Bajo",
+      "why_care": "Los pacientes con esta caracter\u00edstica aparecen 2.6 veces m\u00e1s frecuentemente en la poblaci\u00f3n con enfermedad que en la poblaci\u00f3n sana.",
+      "severity": "CRITICAL",
+      "next_analysis_suggested": "Revisar pacientes con relaci\u00f3n A/G baja (< 0.7) para descartar posible inflamaci\u00f3n cr\u00f3nica o cirrosis avanzada.",
+      "sample_size": 583,
+      "evidence_count": 97,
+      "method": "Correlaci\u00f3n y Descubrimiento de Subgrupos",
+      "priority": 2.3504,
+      "supporting_variables": [
+        "A/G Ratio"
+      ]
+    }
+  },
+  {
+    "source": "Insight Engine",
+    "text": "143 pacientes presentan Prote\u00ednas Totales reducida",
+    "type": "statistical_claim",
+    "raw": {
+      "finding": "143 pacientes presentan Prote\u00ednas Totales reducida",
+      "explanation": "La reducci\u00f3n de Prote\u00ednas Totales refleja un balance negativo de s\u00edntesis proteica hep\u00e1tica o desnutrici\u00f3n.",
+      "impact": "24.5% de la poblaci\u00f3n",
+      "confidence": 74.1,
+      "evidence": [
+        "TP < P25",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Evaluar p\u00e9rdida renal o desnutrici\u00f3n proteica",
+      "urgency": "HIGH",
+      "affected_population": 143,
+      "id": "INSIGHT_8_TP_LOW",
+      "title": "Riesgo Elevado: Prote\u00ednas Totales Bajo",
+      "why_care": "Los pacientes con esta caracter\u00edstica aparecen 1.2 veces m\u00e1s frecuentemente en la poblaci\u00f3n con enfermedad que en la poblaci\u00f3n sana.",
+      "severity": "HIGH",
+      "next_analysis_suggested": "Revisar pacientes con Prote\u00ednas Totales bajas (< 5.8 g/dL) para valorar p\u00e9rdida renal o malabsorci\u00f3n.",
+      "sample_size": 583,
+      "evidence_count": 143,
+      "method": "Correlaci\u00f3n y Descubrimiento de Subgrupos",
+      "priority": 0.6365,
+      "supporting_variables": [
+        "TP"
+      ]
+    }
+  }
+]

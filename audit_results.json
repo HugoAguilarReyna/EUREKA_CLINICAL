@@ -1,0 +1,65 @@
+[
+  {
+    "name": "Summary",
+    "status": 200,
+    "duration_ms": 6.75201416015625,
+    "payload_size": "5.2 KB",
+    "nodes": 5849,
+    "edges": 5247,
+    "answer": ""
+  },
+  {
+    "name": "Top Assets",
+    "status": 200,
+    "duration_ms": 8.724212646484375,
+    "payload_size": "1.4 KB",
+    "nodes": 10,
+    "edges": 0,
+    "answer": ""
+  },
+  {
+    "name": "Centrality",
+    "status": 200,
+    "duration_ms": 102.43535041809082,
+    "payload_size": "954.6 KB",
+    "nodes": 5849,
+    "edges": 0,
+    "answer": ""
+  },
+  {
+    "name": "Copilot Query 1",
+    "status": 200,
+    "duration_ms": 19.11449432373047,
+    "payload_size": "190.0 B",
+    "nodes": 0,
+    "edges": 0,
+    "answer": "El dataset contiene 583 pacientes procesados y almacenados en el grafo de conocimiento. (583 nodos Patient verificados en Neo4j)."
+  },
+  {
+    "name": "Copilot Query 2",
+    "status": 200,
+    "duration_ms": 10.020017623901367,
+    "payload_size": "258.0 B",
+    "nodes": 0,
+    "edges": 0,
+    "answer": "La variable objetivo detectada autom\u00e1ticamente es: 'Selector'. Clase 1: 416 pacientes (71.4%) | Clase 2: 167 pacientes (28.6%)"
+  },
+  {
+    "name": "Copilot Query 3",
+    "status": 200,
+    "duration_ms": 15.065193176269531,
+    "payload_size": "595.0 B",
+    "nodes": 0,
+    "edges": 0,
+    "answer": "Las variables m\u00e1s predictivas del dataset (correlaci\u00f3n con 'Selector'):\n\n1. DB: correlaci\u00f3n negativa baja (-0.246)\n2. TB: correlaci\u00f3n negativa baja (-0.220)\n3. Alkphos: correlaci\u00f3n negativa baja (-0.185)\n4. Sgpt: correlaci\u00f3n negativa baja (-0.163)\n5. A/G Ratio: correlaci\u00f3n positiva baja (+0.163)\n\nLa variable m\u00e1s importante es 'DB'."
+  },
+  {
+    "name": "Copilot Query 4",
+    "status": 200,
+    "duration_ms": 13.583183288574219,
+    "payload_size": "369.0 B",
+    "nodes": 0,
+    "edges": 0,
+    "answer": "Dataset 'act_liver_disease.csv': 583 pacientes, 11 variables cl\u00ednicas. Variable objetivo: 'Selector' (Clase 1: 71.4% / Clase 2: 28.6%). Calidad de datos: 97/100. Valores faltantes: 4. Outliers detectados: 391. Variable m\u00e1s predictiva: 'DB' (correlaci\u00f3n: -0.246)."
+  }
+]

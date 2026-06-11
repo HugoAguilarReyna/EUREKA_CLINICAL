@@ -1,0 +1,252 @@
+[
+  {
+    "older": "Dataset Base",
+    "newer": "Estable 1",
+    "scenario": "A",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Estable 1",
+    "newer": "Ruido 1",
+    "scenario": "B",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Ruido 1",
+    "newer": "Ruido 2",
+    "scenario": "B",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Ruido 2",
+    "newer": "Mejora Leve",
+    "scenario": "C",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' disminuy\u00f3 significativamente",
+        "previous_value": 23.2,
+        "current_value": 22.1,
+        "delta": -1.03,
+        "impact": "Reducci\u00f3n de la poblaci\u00f3n en riesgo",
+        "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+      }
+    ]
+  },
+  {
+    "older": "Mejora Leve",
+    "newer": "Deterioro Leve",
+    "scenario": "E",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' aument\u00f3 significativamente",
+        "previous_value": 22.1,
+        "current_value": 23.0,
+        "delta": 0.86,
+        "impact": "Mayor poblaci\u00f3n en riesgo",
+        "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+      }
+    ]
+  },
+  {
+    "older": "Deterioro Leve",
+    "newer": "Ruido 3",
+    "scenario": "B",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Ruido 3",
+    "newer": "Mejora Fuerte",
+    "scenario": "D",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' disminuy\u00f3 significativamente",
+        "previous_value": 23.2,
+        "current_value": 19.6,
+        "delta": -3.6,
+        "impact": "Reducci\u00f3n de la poblaci\u00f3n en riesgo",
+        "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+      }
+    ]
+  },
+  {
+    "older": "Mejora Fuerte",
+    "newer": "Ruido 4",
+    "scenario": "B",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Ruido 4",
+    "newer": "Deterioro Critico 1",
+    "scenario": "F",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' aument\u00f3 significativamente",
+        "previous_value": 19.2,
+        "current_value": 24.0,
+        "delta": 4.8,
+        "impact": "Mayor poblaci\u00f3n en riesgo",
+        "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+      }
+    ]
+  },
+  {
+    "older": "Deterioro Critico 1",
+    "newer": "Estable 2",
+    "scenario": "A",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Estable 2",
+    "newer": "Aparicion Riesgo 1",
+    "scenario": "G",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "Nuevo riesgo detectado: Nuevo Marcador Severo Detectado",
+        "previous_value": 0.0,
+        "current_value": 14.9,
+        "delta": 14.9,
+        "impact": "Nueva cohorte cl\u00ednica identificada",
+        "recommendation": "Atencion inmediata a nuevo marcador."
+      }
+    ]
+  },
+  {
+    "older": "Aparicion Riesgo 1",
+    "newer": "Ruido 5",
+    "scenario": "B",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Ruido 5",
+    "newer": "Deterioro Leve 2",
+    "scenario": "E",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' aument\u00f3 significativamente",
+        "previous_value": 24.2,
+        "current_value": 24.9,
+        "delta": 0.69,
+        "impact": "Mayor poblaci\u00f3n en riesgo",
+        "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+      }
+    ]
+  },
+  {
+    "older": "Deterioro Leve 2",
+    "newer": "Mejora Fuerte 2",
+    "scenario": "D",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' disminuy\u00f3 significativamente",
+        "previous_value": 24.9,
+        "current_value": 19.9,
+        "delta": -4.97,
+        "impact": "Reducci\u00f3n de la poblaci\u00f3n en riesgo",
+        "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+      }
+    ]
+  },
+  {
+    "older": "Mejora Fuerte 2",
+    "newer": "Ruido 6",
+    "scenario": "B",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Ruido 6",
+    "newer": "Estable 3",
+    "scenario": "A",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  },
+  {
+    "older": "Estable 3",
+    "newer": "Desaparicion Riesgo",
+    "scenario": "H",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "Riesgo mitigado o desaparecido: Nuevo Marcador Severo Detectado",
+        "previous_value": 14.9,
+        "current_value": 0.0,
+        "delta": -14.9,
+        "impact": "Subgrupo cl\u00ednico dej\u00f3 de ser estad\u00edsticamente relevante",
+        "recommendation": "Rebajar la prioridad de este criterio en los paneles de triaje."
+      }
+    ]
+  },
+  {
+    "older": "Desaparicion Riesgo",
+    "newer": "Deterioro Critico 2",
+    "scenario": "F",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' aument\u00f3 significativamente",
+        "previous_value": 20.1,
+        "current_value": 26.1,
+        "delta": 6.0,
+        "impact": "Mayor poblaci\u00f3n en riesgo",
+        "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+      }
+    ]
+  },
+  {
+    "older": "Deterioro Critico 2",
+    "newer": "Mejora Leve 2",
+    "scenario": "C",
+    "expected_alert": true,
+    "did_alert": true,
+    "findings": [
+      {
+        "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' disminuy\u00f3 significativamente",
+        "previous_value": 26.1,
+        "current_value": 24.7,
+        "delta": -1.37,
+        "impact": "Reducci\u00f3n de la poblaci\u00f3n en riesgo",
+        "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+      }
+    ]
+  },
+  {
+    "older": "Mejora Leve 2",
+    "newer": "Ruido 7",
+    "scenario": "B",
+    "expected_alert": false,
+    "did_alert": false,
+    "findings": []
+  }
+]

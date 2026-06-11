@@ -1,0 +1,122 @@
+{
+  "endpoints": {
+    "summary": {
+      "url": "http://localhost:8001/graph/analytics/summary",
+      "error": "HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=10)"
+    },
+    "insights": {
+      "url": "http://localhost:8001/knowledge/intelligence/insights",
+      "status_code": 200,
+      "latency_ms": 4155.02,
+      "payload_size_bytes": 5508,
+      "record_count": 8,
+      "preview": "[{'id': 'INSIGHT_4_DB_HIGH', 'title': 'Riesgo Elevado: Bilirrubina Directa Alto', 'finding': 'Bilirrubina Directa elevada', 'why_care': 'Los pacientes con esta característica aparecen 7.4 veces más frecuentemente en la población con enfermedad que en la población sana.', 'impact': '136 pacientes se ..."
+    },
+    "rules": {
+      "url": "http://localhost:8001/knowledge/intelligence/rules",
+      "status_code": 200,
+      "latency_ms": 20.19,
+      "payload_size_bytes": 1891,
+      "record_count": 7,
+      "preview": "[{'id': 'RULE_1_A/G Ratio_LOW', 'expression': 'A/G Ratio < 0.7', 'conditions': [{'variable': 'A/G Ratio', 'op': '<', 'val': 0.7}], 'target_class': 'Liver Disease', 'lift': 1.2136201427438542, 'support': 0.16638078902229847, 'confidence': 0.865979381443299, 'affected_count': 97, 'rule_status': 'ACTIV..."
+    },
+    "simulate": {
+      "url": "http://localhost:8001/knowledge/intelligence/simulate",
+      "status_code": 200,
+      "latency_ms": 1722.66,
+      "payload_size_bytes": 1596,
+      "record_count": 8,
+      "preview": "{'scenario_name': 'Scenario 1: IQR Outlier Trim', 'expected_change': 'Eliminación de outliers clínicos usando un umbral IQR de 1.5x.', 'expected_risk': 'La prevalencia de enfermedad hepática cambia de 71.4% a 57.5%.', 'expected_impact': 'Se descartaron 265 pacientes con valores extremos atípicos.', ..."
+    },
+    "explain": {
+      "url": "http://localhost:8001/knowledge/explain/Patient_5",
+      "status_code": 200,
+      "latency_ms": 22.32,
+      "payload_size_bytes": 3590,
+      "record_count": 5,
+      "preview": "{'patient_id': 'Patient_5', 'age': 46, 'gender': 'Male', 'classification': 'Liver Disease', 'confidence': 0.65, 'contributing_factors': [{'variable': 'Sgpt', 'display_name': 'ALT (Alanine Aminotransferase)', 'unit': 'IU/L', 'value': 19.0, 'status': 'Low', 'threshold': 23.0, 'disease_rate': 0.568, 'd..."
+    },
+    "trace": {
+      "url": "http://localhost:8001/knowledge/trace/Patient_5",
+      "status_code": 200,
+      "latency_ms": 54.13,
+      "payload_size_bytes": 7311,
+      "record_count": 8,
+      "preview": "{'patient_id': 'Patient_5', 'classification': 'Liver Disease', 'confidence': 0.65, 'confidence_pct': '65%', 'layers': {'1_source_data': [{'layer': 1, 'layer_name': 'Source Data', 'variable': 'A/G Ratio', 'display': 'A/G Ratio', 'value': '1.3', 'note': 'Medición clínica directa del dataset'}, {'layer..."
+    },
+    "influence": {
+      "url": "http://localhost:8001/graph/analytics/influence/DB",
+      "status_code": 200,
+      "latency_ms": 1480.17,
+      "payload_size_bytes": 348,
+      "record_count": 7,
+      "preview": "{'asset_id': 'DB', 'impacted_cases': [], 'impacted_assets': [], 'influence_score': 6.0976, 'accuracy_drop_pct': 6.1, 'impact_level': 'CRITICAL', 'description': 'Si eliminamos DB del modelo:\\n* La capacidad predictiva cae 6.1%\\n* 25 pacientes dejan de clasificarse correctamente\\n* Riesgo: CRITICAL\\n\\..."
+    },
+    "heatmap": {
+      "url": "http://localhost:8001/graph/analytics/heatmap",
+      "status_code": 200,
+      "latency_ms": 694.99,
+      "payload_size_bytes": 5369,
+      "record_count": 81,
+      "preview": "[{'x': 'Age', 'y': 'Age', 'value': 1.0}, {'x': 'Age', 'y': 'Albumin/Globulin Ratio', 'value': -0.2164}, {'x': 'Age', 'y': 'Albumin', 'value': -0.2642}, {'x': 'Age', 'y': 'Alkaline Phosphatase', 'value': 0.0789}, {'x': 'Age', 'y': 'Direct Bilirubin', 'value': 0.0068}, {'x': 'Age', 'y': 'AST (Aspartat..."
+    },
+    "sankey": {
+      "url": "http://localhost:8001/graph/analytics/sankey",
+      "status_code": 200,
+      "latency_ms": 769.38,
+      "payload_size_bytes": 2629,
+      "record_count": 26,
+      "preview": "{'nodes': [{'name': 'Bilirrubina Directa Alto'}, {'name': 'Bilirrubina Directa elevada'}, {'name': 'Riesgo CRITICAL'}, {'name': 'Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucción biliar o colestasis.'}, {'name': 'Bi..."
+    }
+  },
+  "copilot": [
+    {
+      "question": "¿Cuántos pacientes existen?",
+      "answer": "**Hallazgo**: Se han procesado y auditado 583 registros de pacientes en el grafo de conocimiento.\n**Impacto**: Cobertura completa del dataset clínico para análisis de riesgo.\n**Evidencia**: Nodos 'Patient' verificados en Neo4j de la muestra original 'act_liver_disease.csv'.\n**Acción sugerida**: Proceder a evaluar la distribución de riesgos clínicos en la sección Executive Intelligence.",
+      "latency_ms": 793.05,
+      "data_preview": "{'sample_size': 583}..."
+    },
+    {
+      "question": "¿Cuáles son las variables más importantes?",
+      "answer": "**Hallazgo**: La Bilirrubina Directa (DB), las transaminasas ALT/AST (Sgpt/Sgot) y la Bilirrubina Total (TB) son las variables con mayor peso predictivo.\n**Impacto**: Cambios severos en estas enzimas y pigmentos biliares indican lesión celular hepática o colestasis activa.\n**Evidencia**: DB tiene una correlación de +0.246 y un impacto LOO (drop) de 6.1%. TB tiene una correlación de +0.220.\n**Acción sugerida**: Revisar prioritaria de pacientes con niveles de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL).",
+      "latency_ms": 11.85,
+      "data_preview": "{'top_variables': ['DB', 'TB', 'Sgpt', 'Sgot']}..."
+    },
+    {
+      "question": "¿Qué hallazgos encontraste?",
+      "answer": "**Hallazgo**: Se detectaron 8 subgrupos de riesgo clínico mediante Subgroup Discovery.\n**Impacto**: Identificación automática de cohortes con alta prevalencia de enfermedad hepática.\n**Evidencia**:\n- Riesgo Elevado: Bilirrubina Directa Alto (Afecta a 136 pacientes, Confianza: 94%)\n- Riesgo Elevado: Bilirrubina Total Alto (Afecta a 144 pacientes, Confianza: 94%)\n- Riesgo Elevado: ALT (Alanina Aminotransferasa) Alto (Afecta a 146 pacientes, Confianza: 91%)\n**Acción sugerida**: Consultar el panel de 'Executive Intelligence' para examinar las variables de soporte y Odds Ratios de cada hallazgo.",
+      "latency_ms": 736.1,
+      "data_preview": "{'discoveries': [{'id': 'INSIGHT_4_DB_HIGH', 'title': 'Riesgo Elevado: Bilirrubina Directa Alto', 'finding': 'Bilirrubina Directa elevada', 'why_care': 'Los pacientes con esta característica aparecen ..."
+    },
+    {
+      "question": "¿Qué riesgos detectaste?",
+      "answer": "**Hallazgo**: Los principales riesgos se concentran en la elevación de Bilirrubina Directa y Total.\n**Impacto**: Alto potencial de colestasis obstructiva o lesión hepatocelular severa en los subgrupos afectados.\n**Evidencia**:\n- Riesgo Elevado: Bilirrubina Directa Alto: 136 pacientes se encuentran por encima de los límites normales (percentil 75). (Incidencia: 94%)\n- Riesgo Elevado: Bilirrubina Total Alto: 144 pacientes se encuentran por encima de los límites normales (percentil 75). (Incidencia: 94%)\n**Acción sugerida**: Iniciar la revisión del subgrupo crítico con DB > 1.3 mg/dL.",
+      "latency_ms": 734.24,
+      "data_preview": "{'critical_risks': [{'id': 'INSIGHT_4_DB_HIGH', 'title': 'Riesgo Elevado: Bilirrubina Directa Alto', 'finding': 'Bilirrubina Directa elevada', 'why_care': 'Los pacientes con esta característica aparec..."
+    },
+    {
+      "question": "¿Qué evidencia respalda esos hallazgos?",
+      "answer": "**Hallazgo**: Evidencia matemática y estadística de soporte extraída dinámicamente.\n**Impacto**: Explicabilidad 'caja blanca' auditable sin alucinaciones de modelos de caja negra.\n**Evidencia**: Incidencias del 94.9% para DB elevada, 94.4% para TB elevada y 91.1% para ALT elevada calculadas sobre 583 pacientes reales.\n**Acción sugerida**: Visualizar las rutas en la pestaña Traceability para ver la secuencia causal de cada paciente.",
+      "latency_ms": 9.76,
+      "data_preview": null
+    },
+    {
+      "question": "¿Qué acción recomendarías investigar?",
+      "answer": "**Hallazgo**: Acciones de soporte de decisión priorizadas en base al riesgo poblacional y Odds Ratio.\n**Impacto**: Prevención de falsos negativos y priorización de recursos analíticos en el hospital.\n**Evidencia**:\n1. Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucción biliar o colestasis. (Riesgo Elevado: Bilirrubina Directa Alto)\n2. Revisar pacientes con valores de Bilirrubina Total superiores al percentil 75 (> 2.6 mg/dL) para evaluar sospecha de ictericia hepática. (Riesgo Elevado: Bilirrubina Total Alto)\n3. Revisar pacientes con transaminasa ALT/SGPT elevada (> 60.5 IU/L) para evaluar grado de necrosis hepatocelular activa. (Riesgo Elevado: ALT (Alanina Aminotransferasa) Alto)\n**Acción sugerida**: Implementar estas recomendaciones de revisión en la lista de pacientes admitidos.",
+      "latency_ms": 813.58,
+      "data_preview": "{'recommended_actions': ['Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucción biliar o colestasis.', 'Revisar pacient..."
+    },
+    {
+      "question": "¿Por qué construiste este grafo?",
+      "answer": "**Hallazgo**: El grafo de conocimiento se construyó para mapear relaciones no lineales entre pacientes y biomarcadores.\n**Impacto**: Permite la trazabilidad clínica y explicabilidad del razonamiento estadístico, superando las limitaciones de los modelos de caja negra.\n**Evidencia**: Estructura de 583 nodos de Pacientes y 5247 relaciones de medición persistidas en Neo4j.\n**Acción sugerida**: Explorar la sección 'Graph Explorer' para visualizar la topología interconectada de la red.",
+      "latency_ms": 10.25,
+      "data_preview": null
+    },
+    {
+      "question": "Resume el dataset.",
+      "answer": "**Hallazgo**: Dataset clínico 'act_liver_disease.csv' con 583 registros de pacientes.\n**Impacto**: Prevalencia base de enfermedad del 71.4% con 11 variables clínicas mapeadas.\n**Evidencia**: Distribución de pacientes (416 enfermos / 167 sanos) verificada estadísticamente.\n**Acción sugerida**: Consultar la sección 'Dashboard Overview' para ver el desglose completo de métricas continuas.",
+      "latency_ms": 881.97,
+      "data_preview": "{'sample_size': 583, 'prevalence': 0.714}..."
+    }
+  ]
+}

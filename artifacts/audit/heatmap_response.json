@@ -1,0 +1,407 @@
+[
+  {
+    "x": "Age",
+    "y": "Age",
+    "value": 1.0
+  },
+  {
+    "x": "Age",
+    "y": "Albumin/Globulin Ratio",
+    "value": -0.2164
+  },
+  {
+    "x": "Age",
+    "y": "Albumin",
+    "value": -0.2642
+  },
+  {
+    "x": "Age",
+    "y": "Alkaline Phosphatase",
+    "value": 0.0789
+  },
+  {
+    "x": "Age",
+    "y": "Direct Bilirubin",
+    "value": 0.0068
+  },
+  {
+    "x": "Age",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": -0.0205
+  },
+  {
+    "x": "Age",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": -0.0878
+  },
+  {
+    "x": "Age",
+    "y": "Total Bilirubin",
+    "value": 0.011
+  },
+  {
+    "x": "Age",
+    "y": "Total Proteins",
+    "value": -0.1862
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "Age",
+    "value": -0.2164
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "Albumin/Globulin Ratio",
+    "value": 1.0
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "Albumin",
+    "value": 0.6896
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "Alkaline Phosphatase",
+    "value": -0.2342
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "Direct Bilirubin",
+    "value": -0.2001
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": -0.07
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": -0.0024
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "Total Bilirubin",
+    "value": -0.2063
+  },
+  {
+    "x": "Albumin/Globulin Ratio",
+    "y": "Total Proteins",
+    "value": 0.2349
+  },
+  {
+    "x": "Albumin",
+    "y": "Age",
+    "value": -0.2642
+  },
+  {
+    "x": "Albumin",
+    "y": "Albumin/Globulin Ratio",
+    "value": 0.6896
+  },
+  {
+    "x": "Albumin",
+    "y": "Albumin",
+    "value": 1.0
+  },
+  {
+    "x": "Albumin",
+    "y": "Alkaline Phosphatase",
+    "value": -0.1634
+  },
+  {
+    "x": "Albumin",
+    "y": "Direct Bilirubin",
+    "value": -0.2284
+  },
+  {
+    "x": "Albumin",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": -0.0849
+  },
+  {
+    "x": "Albumin",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": -0.0287
+  },
+  {
+    "x": "Albumin",
+    "y": "Total Bilirubin",
+    "value": -0.2221
+  },
+  {
+    "x": "Albumin",
+    "y": "Total Proteins",
+    "value": 0.7831
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "Age",
+    "value": 0.0789
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "Albumin/Globulin Ratio",
+    "value": -0.2342
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "Albumin",
+    "value": -0.1634
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "Alkaline Phosphatase",
+    "value": 1.0
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "Direct Bilirubin",
+    "value": 0.234
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": 0.1666
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": 0.1248
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "Total Bilirubin",
+    "value": 0.2057
+  },
+  {
+    "x": "Alkaline Phosphatase",
+    "y": "Total Proteins",
+    "value": -0.0271
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "Age",
+    "value": 0.0068
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "Albumin/Globulin Ratio",
+    "value": -0.2001
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "Albumin",
+    "value": -0.2284
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "Alkaline Phosphatase",
+    "value": 0.234
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "Direct Bilirubin",
+    "value": 1.0
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": 0.257
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": 0.2332
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "Total Bilirubin",
+    "value": 0.8745
+  },
+  {
+    "x": "Direct Bilirubin",
+    "y": "Total Proteins",
+    "value": 0.0
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "Age",
+    "value": -0.0205
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "Albumin/Globulin Ratio",
+    "value": -0.07
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "Albumin",
+    "value": -0.0849
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "Alkaline Phosphatase",
+    "value": 0.1666
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "Direct Bilirubin",
+    "value": 0.257
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": 1.0
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": 0.7919
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "Total Bilirubin",
+    "value": 0.2373
+  },
+  {
+    "x": "AST (Aspartate Aminotransferase)",
+    "y": "Total Proteins",
+    "value": -0.0258
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "Age",
+    "value": -0.0878
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "Albumin/Globulin Ratio",
+    "value": -0.0024
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "Albumin",
+    "value": -0.0287
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "Alkaline Phosphatase",
+    "value": 0.1248
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "Direct Bilirubin",
+    "value": 0.2332
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": 0.7919
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": 1.0
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "Total Bilirubin",
+    "value": 0.2134
+  },
+  {
+    "x": "ALT (Alanine Aminotransferase)",
+    "y": "Total Proteins",
+    "value": -0.0424
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "Age",
+    "value": 0.011
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "Albumin/Globulin Ratio",
+    "value": -0.2063
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "Albumin",
+    "value": -0.2221
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "Alkaline Phosphatase",
+    "value": 0.2057
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "Direct Bilirubin",
+    "value": 0.8745
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": 0.2373
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": 0.2134
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "Total Bilirubin",
+    "value": 1.0
+  },
+  {
+    "x": "Total Bilirubin",
+    "y": "Total Proteins",
+    "value": -0.0079
+  },
+  {
+    "x": "Total Proteins",
+    "y": "Age",
+    "value": -0.1862
+  },
+  {
+    "x": "Total Proteins",
+    "y": "Albumin/Globulin Ratio",
+    "value": 0.2349
+  },
+  {
+    "x": "Total Proteins",
+    "y": "Albumin",
+    "value": 0.7831
+  },
+  {
+    "x": "Total Proteins",
+    "y": "Alkaline Phosphatase",
+    "value": -0.0271
+  },
+  {
+    "x": "Total Proteins",
+    "y": "Direct Bilirubin",
+    "value": 0.0
+  },
+  {
+    "x": "Total Proteins",
+    "y": "AST (Aspartate Aminotransferase)",
+    "value": -0.0258
+  },
+  {
+    "x": "Total Proteins",
+    "y": "ALT (Alanine Aminotransferase)",
+    "value": -0.0424
+  },
+  {
+    "x": "Total Proteins",
+    "y": "Total Bilirubin",
+    "value": -0.0079
+  },
+  {
+    "x": "Total Proteins",
+    "y": "Total Proteins",
+    "value": 1.0
+  }
+]

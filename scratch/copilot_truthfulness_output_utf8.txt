@@ -1,0 +1,38 @@
+--- COPILOT TRUTHFULNESS AND ACCURACY AUDIT ---
+Question: How many patients exist?
+Answer: El dataset contiene 583 pacientes procesados y almacenados en el grafo de conocimiento. (583 nodos Patient verificados en Neo4j).
+Data Payload: {'total_patients': 583, 'graph_nodes': 583}
+------------------------------------------------------------
+Question: What is the average age?
+Answer: Soy el Copiloto de Inteligencia de Negocio de Eureka. Analizo 'act_liver_disease.csv' (583 registros). Puedo responder: ¿Cuántos registros existen? ¿Cuál es la variable objetivo? ¿Qué variables son más importantes? ¿Qué anomalías se detectaron? ¿Puedes resumir el dataset? ¿Qué descubrimientos encontraste?
+Data Payload: {'suggestions': ['How many records exist?', 'What variables are most important?', 'Summarize the dataset.', 'What discoveries did you find?', 'What target variable was detected?']}
+------------------------------------------------------------
+Question: What variables are most important?
+Answer: Las variables más predictivas del dataset (correlación con 'Selector'):
+
+1. DB: correlación negativa baja (-0.246)
+2. TB: correlación negativa baja (-0.220)
+3. Alkphos: correlación negativa baja (-0.185)
+4. Sgpt: correlación negativa baja (-0.163)
+5. A/G Ratio: correlación positiva baja (+0.163)
+
+La variable más importante es 'DB'.
+Data Payload: {'correlations': [{'feature': 'DB', 'correlation': -0.246}, {'feature': 'TB', 'correlation': -0.2202}, {'feature': 'Alkphos', 'correlation': -0.1849}, {'feature': 'Sgpt', 'correlation': -0.1634}, {'feature': 'A/G Ratio', 'correlation': 0.1631}]}
+------------------------------------------------------------
+Question: What discoveries were found?
+Answer: Hallazgos clave del dataset (583 pacientes, variable objetivo: 'Selector'):
+
+🔴 'DB' es el predictor más fuerte (corr=-0.246). Pacientes con High DB: 94.9% tienen enfermedad (136 casos).
+🟠 'TB' es el segundo predictor más relevante (correlación: -0.220).
+🟡 Se detectaron 391 valores atípicos que pueden representar casos clínicos extremos.
+⚠️ Se detectaron 4 valores faltantes en el dataset.
+Data Payload: {'discoveries': ["🔴 'DB' es el predictor más fuerte (corr=-0.246). Pacientes con High DB: 94.9% tienen enfermedad (136 casos).", "🟠 'TB' es el segundo predictor más relevante (correlación: -0.220).", '🟡 Se detectaron 391 valores atípicos que pueden representar casos clínicos extremos.', '⚠️ Se detectaron 4 valores faltantes en el dataset.'], 'correlation_count': 9}
+------------------------------------------------------------
+Question: Why was this graph built?
+Answer: Construí este grafo de conocimiento para transformar 'act_liver_disease.csv' (583 registros) de una tabla plana en una red de conocimiento interconectada. Esto permite descubrir patrones ocultos, calcular qué variables clínicas tienen mayor influencia sobre el diagnóstico, y trazar el camino completo desde datos crudos hasta explicaciones clínicas comprensibles.
+Data Payload: None
+------------------------------------------------------------
+Question: What should a physician pay attention to?
+Answer: Soy el Copiloto de Inteligencia de Negocio de Eureka. Analizo 'act_liver_disease.csv' (583 registros). Puedo responder: ¿Cuántos registros existen? ¿Cuál es la variable objetivo? ¿Qué variables son más importantes? ¿Qué anomalías se detectaron? ¿Puedes resumir el dataset? ¿Qué descubrimientos encontraste?
+Data Payload: {'suggestions': ['How many records exist?', 'What variables are most important?', 'Summarize the dataset.', 'What discoveries did you find?', 'What target variable was detected?']}
+------------------------------------------------------------

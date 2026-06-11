@@ -1,0 +1,113 @@
+{
+  "patient_id": "Patient_5",
+  "age": 46.0,
+  "gender": "Male",
+  "classification": "Liver Disease",
+  "confidence": 0.65,
+  "clinical_interpretation": "Compatible con rangos clínicos y metabólicos normales.",
+  "similar_patients": [
+    "Patient_148",
+    "Patient_149",
+    "Patient_184",
+    "Patient_223",
+    "Patient_273"
+  ],
+  "suggested_next_investigation": "Continuar monitoreo de rutina periódico de enzimas hepáticas.",
+  "clinical_narrative": "El paciente fue clasificado como positivo (enfermo) porque presenta:\n- ALT (Alanine Aminotransferase) reducida\n- Albumin/Globulin Ratio elevada\n- Albumin elevada\n\nEste patrón aparece en el 56.8% de pacientes con enfermedad hepática.\n\nImpacto clínico:\nCompatible con rangos clínicos y metabólicos normales.",
+  "contributing_factors": [
+    {
+      "variable": "Sgpt",
+      "display_name": "ALT (Alanine Aminotransferase)",
+      "unit": "IU/L",
+      "value": 19.0,
+      "status": "Low",
+      "threshold": 23.0,
+      "disease_rate": 0.568,
+      "disease_rate_pct": "56.8%",
+      "sample_count": 139,
+      "correlation": 0.1634,
+      "observacion": "ALT (Alanine Aminotransferase) reducida (valor=19.0 IU/L)",
+      "interpretacion": "Asociación fuerte con la variable objetivo.",
+      "evidencia": "Presente en el 56.8% de los casos positivos en el dataset.",
+      "siguiente_accion": "Siguiente análisis sugerido: Revisar pacientes con valores inferiores al percentil 25 de ALT (Alanine Aminotransferase).",
+      "clinical_context": "ALT baja → sin lesión activa detectada"
+    },
+    {
+      "variable": "A/G Ratio",
+      "display_name": "Albumin/Globulin Ratio",
+      "unit": "",
+      "value": 1.3,
+      "status": "High",
+      "threshold": 1.1,
+      "disease_rate": 0.587,
+      "disease_rate_pct": "58.7%",
+      "sample_count": 126,
+      "correlation": 0.1631,
+      "observacion": "Albumin/Globulin Ratio elevada (valor=1.3 )",
+      "interpretacion": "Asociación fuerte con la variable objetivo.",
+      "evidencia": "Presente en el 58.7% de los casos positivos en el dataset.",
+      "siguiente_accion": "Siguiente análisis sugerido: Revisar pacientes con valores superiores al percentil 75 de Albumin/Globulin Ratio.",
+      "clinical_context": "Razón A/G alta → posible hipogammaglobulinemia"
+    },
+    {
+      "variable": "ALB",
+      "display_name": "Albumin",
+      "unit": "g/dL",
+      "value": 4.4,
+      "status": "High",
+      "threshold": 3.8,
+      "disease_rate": 0.612,
+      "disease_rate_pct": "61.2%",
+      "sample_count": 134,
+      "correlation": 0.1614,
+      "observacion": "Albumin elevada (valor=4.4 g/dL)",
+      "interpretacion": "Asociación fuerte con la variable objetivo.",
+      "evidencia": "Presente en el 61.2% de los casos positivos en el dataset.",
+      "siguiente_accion": "Siguiente análisis sugerido: Revisar pacientes con valores superiores al percentil 75 de Albumin.",
+      "clinical_context": "Albúmina alta → síntesis proteica normal"
+    },
+    {
+      "variable": "Sgot",
+      "display_name": "AST (Aspartate Aminotransferase)",
+      "unit": "IU/L",
+      "value": 14.0,
+      "status": "Low",
+      "threshold": 25.0,
+      "disease_rate": 0.537,
+      "disease_rate_pct": "53.7%",
+      "sample_count": 136,
+      "correlation": 0.1519,
+      "observacion": "AST (Aspartate Aminotransferase) reducida (valor=14.0 IU/L)",
+      "interpretacion": "Asociación fuerte con la variable objetivo.",
+      "evidencia": "Presente en el 53.7% de los casos positivos en el dataset.",
+      "siguiente_accion": "Siguiente análisis sugerido: Revisar pacientes con valores inferiores al percentil 25 de AST (Aspartate Aminotransferase).",
+      "clinical_context": "AST baja → sin lesión activa detectada"
+    },
+    {
+      "variable": "TP",
+      "display_name": "Total Proteins",
+      "unit": "g/dL",
+      "value": 7.6,
+      "status": "High",
+      "threshold": 7.2,
+      "disease_rate": 0.672,
+      "disease_rate_pct": "67.2%",
+      "sample_count": 134,
+      "correlation": 0.035,
+      "observacion": "Total Proteins elevada (valor=7.6 g/dL)",
+      "interpretacion": "Asociación fuerte con la variable objetivo.",
+      "evidencia": "Presente en el 67.2% de los casos positivos en el dataset.",
+      "siguiente_accion": "Siguiente análisis sugerido: Revisar pacientes con valores superiores al percentil 75 de Total Proteins.",
+      "clinical_context": "Proteínas totales altas → posible deshidratación o infección"
+    }
+  ],
+  "factor_count": 5,
+  "next_steps": [
+    "Siguiente análisis sugerido: Siguiente análisis sugerido: Revisar pacientes con valores inferiores al percentil 25 de ALT (Alanine Aminotransferase).",
+    "Siguiente análisis sugerido: Siguiente análisis sugerido: Revisar pacientes con valores superiores al percentil 75 de Albumin/Globulin Ratio."
+  ],
+  "caveats": [
+    "Esta es una asociación estadística de soporte para toma de decisiones, no una prescripción clínica.",
+    "Se sugiere correlacionar estos hallazgos con el historial clínico completo del paciente."
+  ]
+}

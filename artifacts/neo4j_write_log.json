@@ -1,0 +1,14 @@
+{
+  "cypher": "MERGE (n:KnowledgeAsset {id: $id}) ON CREATE SET n = $props ...",
+  "params": {
+    "id": "e2e_asset_bf58d9eb",
+    "label": "KnowledgeAsset",
+    "properties": {
+      "clinical_relevance": "critical",
+      "reuse_count": 0,
+      "status": "ACTIVE"
+    }
+  },
+  "timestamp": "2026-06-04T04:25:29.198268",
+  "status": "SUCCESS"
+}

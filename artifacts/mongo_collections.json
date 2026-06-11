@@ -1,0 +1,8 @@
+{
+  "uri": "mongodb://localhost:27018/eureka",
+  "db": "eureka",
+  "collections": [
+    "knowledge_assets"
+  ],
+  "timestamp": "2026-06-04T04:25:27.350384"
+}

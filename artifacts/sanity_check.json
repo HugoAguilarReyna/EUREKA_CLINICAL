@@ -1,0 +1,73 @@
+{
+  "results": [
+    {
+      "check": "MongoDB Ping",
+      "passed": true,
+      "detail": "db=eureka, collections=1"
+    },
+    {
+      "check": "Neo4j Ping",
+      "passed": true,
+      "detail": "version=5.26.26, total_nodes=0"
+    },
+    {
+      "check": "MongoDB Insert",
+      "passed": true,
+      "detail": "asset_id=e2e_asset_bf58d9eb"
+    },
+    {
+      "check": "GraphMapper map_knowledge_asset",
+      "passed": true,
+      "detail": "id=e2e_asset_bf58d9eb, label=KnowledgeAsset"
+    },
+    {
+      "check": "GraphMapper map_asset_relationships",
+      "passed": true,
+      "detail": "edges=0"
+    },
+    {
+      "check": "Neo4jWriter write_node",
+      "passed": true,
+      "detail": "MERGE KnowledgeAsset:e2e_asset_bf58d9eb"
+    },
+    {
+      "check": "Neo4jWriter write_edges",
+      "passed": true,
+      "detail": "0 edges (no related_assets)"
+    },
+    {
+      "check": "Cypher MATCH node",
+      "passed": true,
+      "detail": "id=e2e_asset_bf58d9eb, status=ACTIVE"
+    },
+    {
+      "check": "Cypher MATCH LIMIT 5",
+      "passed": true,
+      "detail": "1 KnowledgeAsset nodes visible"
+    },
+    {
+      "check": "GraphSyncService sync_document",
+      "passed": true,
+      "detail": "complete roundtrip via service"
+    },
+    {
+      "check": "REST GET /graph/assets/{id}",
+      "passed": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "check": "REST GET /graph/explainability/{id}",
+      "passed": false,
+      "detail": "HTTP 404"
+    },
+    {
+      "check": "Cleanup",
+      "passed": true,
+      "detail": "Mongo=1, Neo4j=1 deleted"
+    }
+  ],
+  "verdict": "D \u2014 FULLY IMPLEMENTED AND VERIFIED (Including REST)",
+  "pipeline_verified": true,
+  "rest_verified": true,
+  "timestamp": "2026-06-04T04:25:30.437419"
+}

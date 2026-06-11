@@ -1,0 +1,22 @@
+{
+  "dataset_older": "Dataset Febrero",
+  "dataset_newer": "Dataset Marzo",
+  "findings": [
+    {
+      "finding": "La relevancia cl\u00ednica de DB disminuy\u00f3",
+      "previous_value": 0.2829,
+      "current_value": 0.2263,
+      "delta": -0.0566,
+      "impact": "La asociaci\u00f3n con la enfermedad disminuy\u00f3 significativamente.",
+      "recommendation": "Ajustar los modelos de riesgo para reducir el peso de DB."
+    },
+    {
+      "finding": "La prevalencia de 'Riesgo Elevado: Bilirrubina Directa Alto' disminuy\u00f3 significativamente",
+      "previous_value": 29.2,
+      "current_value": 23.3,
+      "delta": -5.83,
+      "impact": "Reducci\u00f3n de la poblaci\u00f3n en riesgo",
+      "recommendation": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucci\u00f3n biliar o colestasis."
+    }
+  ]
+}

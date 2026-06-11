@@ -1,0 +1,398 @@
+{
+  "summary": {
+    "total_nodes": 5849,
+    "total_edges": 5247,
+    "graph_density": 0.000153398841197029,
+    "top_assets": [
+      {
+        "asset_id": "Patient_0",
+        "pagerank": 0.0001577114467716155,
+        "betweenness": 0.0,
+        "eigenvector": 0.0,
+        "degree": 0.0015389876880984952,
+        "global_score": 100.0
+      },
+      {
+        "asset_id": "Patient_1",
+        "pagerank": 0.0001577114467716155,
+        "betweenness": 0.0,
+        "eigenvector": 0.0,
+        "degree": 0.0015389876880984952,
+        "global_score": 100.0
+      },
+      {
+        "asset_id": "Patient_2",
+        "pagerank": 0.0001577114467716155,
+        "betweenness": 0.0,
+        "eigenvector": 0.0,
+        "degree": 0.0015389876880984952,
+        "global_score": 100.0
+      },
+      {
+        "asset_id": "Patient_3",
+        "pagerank": 0.0001577114467716155,
+        "betweenness": 0.0,
+        "eigenvector": 0.0,
+        "degree": 0.0015389876880984952,
+        "global_score": 100.0
+      },
+      {
+        "asset_id": "Patient_4",
+        "pagerank": 0.0001577114467716155,
+        "betweenness": 0.0,
+        "eigenvector": 0.0,
+        "degree": 0.0015389876880984952,
+        "global_score": 100.0
+      }
+    ],
+    "computed_at": "2026-06-04T21:51:52.185569",
+    "dataset_summary": {
+      "highly_correlated_features": [
+        {
+          "feature": "DB",
+          "correlation": -0.246
+        },
+        {
+          "feature": "TB",
+          "correlation": -0.2202
+        },
+        {
+          "feature": "Alkphos",
+          "correlation": -0.1849
+        },
+        {
+          "feature": "Sgpt",
+          "correlation": -0.1634
+        },
+        {
+          "feature": "A/G Ratio",
+          "correlation": 0.1631
+        },
+        {
+          "feature": "ALB",
+          "correlation": 0.1614
+        },
+        {
+          "feature": "Sgot",
+          "correlation": -0.1519
+        },
+        {
+          "feature": "Age",
+          "correlation": -0.1374
+        },
+        {
+          "feature": "TP",
+          "correlation": 0.035
+        }
+      ],
+      "missing_per_column": {
+        "Age": 0,
+        "Gender": 0,
+        "TB": 0,
+        "DB": 0,
+        "Alkphos": 0,
+        "Sgpt": 0,
+        "Sgot": 0,
+        "TP": 0,
+        "ALB": 0,
+        "A/G Ratio": 4,
+        "Selector": 0
+      },
+      "semantic_enriched": true,
+      "file_name": "act_liver_disease.csv",
+      "columns": 11,
+      "quality_score": 97,
+      "created_at": "2026-06-04T18:38:00.563153",
+      "rows": 583,
+      "missing_values": 4,
+      "enriched_at": "2026-06-04T19:22:53.478000000+00:00",
+      "node_type": "DatasetMetadata",
+      "updated_at": "2026-06-04T18:43:28.571206",
+      "target_candidate": "Selector",
+      "file_type": "csv",
+      "target_distribution": {
+        "1": {
+          "count": 416,
+          "percentage": 71.4
+        },
+        "2": {
+          "count": 167,
+          "percentage": 28.6
+        }
+      },
+      "column_statistics": {
+        "Age": {
+          "mean": 44.74614065180103,
+          "std": 16.18983330469438,
+          "min": 4.0,
+          "max": 90.0,
+          "q25": 33.0,
+          "q75": 58.0,
+          "outliers": 0,
+          "missing": 0,
+          "type": "numeric"
+        },
+        "Gender": {
+          "unique_values": 2,
+          "top_value": "Male",
+          "missing": 0,
+          "type": "categorical"
+        },
+        "TB": {
+          "mean": 3.298799313893653,
+          "std": 6.209521726180149,
+          "min": 0.4,
+          "max": 75.0,
+          "q25": 0.8,
+          "q75": 2.6,
+          "outliers": 84,
+          "missing": 0,
+          "type": "numeric"
+        },
+        "DB": {
+          "mean": 1.486106346483705,
+          "std": 2.8084976176589644,
+          "min": 0.1,
+          "max": 19.7,
+          "q25": 0.2,
+          "q75": 1.3,
+          "outliers": 81,
+          "missing": 0,
+          "type": "numeric"
+        },
+        "Alkphos": {
+          "mean": 290.57632933104634,
+          "std": 242.93798917934396,
+          "min": 63.0,
+          "max": 2110.0,
+          "q25": 175.5,
+          "q75": 298.0,
+          "outliers": 69,
+          "missing": 0,
+          "type": "numeric"
+        },
+        "Sgpt": {
+          "mean": 80.71355060034305,
+          "std": 182.62035603420242,
+          "min": 10.0,
+          "max": 2000.0,
+          "q25": 23.0,
+          "q75": 60.5,
+          "outliers": 73,
+          "missing": 0,
+          "type": "numeric"
+        },
+        "Sgot": {
+          "mean": 109.91080617495712,
+          "std": 288.9185290517341,
+          "min": 10.0,
+          "max": 4929.0,
+          "q25": 25.0,
+          "q75": 87.0,
+          "outliers": 66,
+          "missing": 0,
+          "type": "numeric"
+        },
+        "TP": {
+          "mean": 6.483190394511149,
+          "std": 1.0854514840234657,
+          "min": 2.7,
+          "max": 9.6,
+          "q25": 5.8,
+          "q75": 7.2,
+          "outliers": 8,
+          "missing": 0,
+          "type": "numeric"
+        },
+        "ALB": {
+          "mean": 3.141852487135506,
+          "std": 0.7955188059640255,
+          "min": 0.9,
+          "max": 5.5,
+          "q25": 2.6,
+          "q75": 3.8,
+          "outliers": 0,
+          "missing": 0,
+          "type": "numeric"
+        },
+        "A/G Ratio": {
+          "mean": 0.9470639032815199,
+          "std": 0.3195921076723706,
+          "min": 0.3,
+          "max": 2.8,
+          "q25": 0.7,
+          "q75": 1.1,
+          "outliers": 10,
+          "missing": 4,
+          "type": "numeric"
+        }
+      },
+      "id": "Dataset_Metadata_Global",
+      "outliers_detected": 391
+    },
+    "business_discoveries": [
+      {
+        "id": "9b96a8a8-bf65-49b3-b5ff-d60731ac68b8",
+        "type": "ExecutiveInsight",
+        "target_id": "DB",
+        "description": "La variable 'DB' tiene la correlación negativa más fuerte con 'Selector' (r=-0.246). Es el predictor más relevante del dataset.",
+        "severity": "HIGH",
+        "metadata": {
+          "confidence": 0.446,
+          "evidence": "Correlación de Pearson: -0.2460",
+          "correlation": -0.246,
+          "feature": "DB"
+        }
+      },
+      {
+        "id": "3af4f852-356a-4cfb-870a-4a65c157559c",
+        "type": "ExecutiveInsight",
+        "target_id": "TB",
+        "description": "La variable 'TB' es el segundo predictor más relevante (r=-0.220) para 'Selector'.",
+        "severity": "HIGH",
+        "metadata": {
+          "confidence": 0.4202,
+          "evidence": "Correlación de Pearson: -0.2202",
+          "correlation": -0.2202
+        }
+      },
+      {
+        "id": "08fbdb34-b951-449a-87fc-41dbb5676581",
+        "type": "ExecutiveInsight",
+        "target_id": "DB",
+        "description": "Pacientes con High DB: 94.9% presentan enfermedad (136 pacientes en esta categoría).",
+        "severity": "HIGH",
+        "metadata": {
+          "confidence": 0.9,
+          "evidence": "Análisis de subgrupo: 136 pacientes con valor alto de DB",
+          "disease_rate": 0.949,
+          "patient_count": 136
+        }
+      },
+      {
+        "id": "9ac2b426-a7ed-4d06-8466-d33f4f46e777",
+        "type": "ExecutiveInsight",
+        "target_id": "Dataset",
+        "description": "Se detectaron 391 valores atípicos (67.1% del dataset). Pueden representar casos clínicos extremos o errores de medición.",
+        "severity": "MEDIUM",
+        "metadata": {
+          "confidence": 0.85,
+          "evidence": "Detección por Rango Intercuartílico (IQR)"
+        }
+      },
+      {
+        "id": "8e345802-0581-4102-a49b-29feaab71ce9",
+        "type": "ExecutiveInsight",
+        "target_id": "Dataset",
+        "description": "Se detectaron 4 valores faltantes en el dataset. Verificar impacto en el análisis.",
+        "severity": "MEDIUM",
+        "metadata": {
+          "confidence": 1.0,
+          "evidence": "Conteo de nulidad por columna"
+        }
+      },
+      {
+        "id": "75139f08-faa8-45ae-be94-e335d0e3a691",
+        "type": "ExecutiveInsight",
+        "target_id": "TP",
+        "description": "La variable 'TP' muestra correlación mínima con 'Selector' (r=+0.035). No es predictiva para este dataset.",
+        "severity": "LOW",
+        "metadata": {
+          "confidence": 0.9,
+          "evidence": "Correlación de Pearson: +0.0350",
+          "implication": "No incluir como predictor primario"
+        }
+      }
+    ]
+  },
+  "rules_count": 7,
+  "rules_sample": [
+    {
+      "id": "RULE_1_A/G Ratio_LOW",
+      "expression": "A/G Ratio < 0.7",
+      "conditions": [
+        {
+          "variable": "A/G Ratio",
+          "op": "<",
+          "val": 0.7
+        }
+      ],
+      "target_class": "Liver Disease",
+      "lift": 1.2136201427438542,
+      "support": 0.16638078902229847,
+      "confidence": 0.865979381443299,
+      "affected_count": 97,
+      "rule_status": "ACTIVE"
+    },
+    {
+      "id": "RULE_2_ALB_LOW",
+      "expression": "ALB < 2.6",
+      "conditions": [
+        {
+          "variable": "ALB",
+          "op": "<",
+          "val": 2.6
+        }
+      ],
+      "target_class": "Liver Disease",
+      "lift": 1.1090550636413945,
+      "support": 0.23842195540308747,
+      "confidence": 0.7913669064748201,
+      "affected_count": 139,
+      "rule_status": "ACTIVE"
+    }
+  ],
+  "insights_count": 8,
+  "insights_sample": [
+    {
+      "finding": "136 pacientes presentan Bilirrubina Directa elevada",
+      "explanation": "La elevación de Bilirrubina Directa indica alta probabilidad de colestasis obstructiva intrahepática o extrahepática.",
+      "impact": "23.3% de la población",
+      "confidence": 94.9,
+      "evidence": [
+        "DB > P75",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Priorizar evaluación hepatobiliar por sospecha de obstrucción",
+      "urgency": "CRITICAL",
+      "affected_population": 136,
+      "id": "INSIGHT_4_DB_HIGH",
+      "title": "Riesgo Elevado: Bilirrubina Directa Alto",
+      "why_care": "Los pacientes con esta característica aparecen 7.4 veces más frecuentemente en la población con enfermedad que en la población sana.",
+      "severity": "CRITICAL",
+      "next_analysis_suggested": "Revisar pacientes con valores de Bilirrubina Directa superiores al percentil 75 (> 1.3 mg/dL) para identificar sospecha de obstrucción biliar o colestasis.",
+      "sample_size": 583,
+      "evidence_count": 136,
+      "method": "Correlación y Descubrimiento de Subgrupos",
+      "priority": 5.4443,
+      "supporting_variables": [
+        "DB"
+      ]
+    },
+    {
+      "finding": "144 pacientes presentan Bilirrubina Total elevada",
+      "explanation": "La elevación de Bilirrubina Total está asociada a ictericia hepática y daño de vías biliares.",
+      "impact": "24.7% de la población",
+      "confidence": 94.4,
+      "evidence": [
+        "TB > P75",
+        "Selector = Enfermo"
+      ],
+      "recommendation": "Evaluar sospecha de ictericia hepática o colestasis",
+      "urgency": "CRITICAL",
+      "affected_population": 144,
+      "id": "INSIGHT_7_TB_HIGH",
+      "title": "Riesgo Elevado: Bilirrubina Total Alto",
+      "why_care": "Los pacientes con esta característica aparecen 6.8 veces más frecuentemente en la población con enfermedad que en la población sana.",
+      "severity": "CRITICAL",
+      "next_analysis_suggested": "Revisar pacientes con valores de Bilirrubina Total superiores al percentil 75 (> 2.6 mg/dL) para evaluar sospecha de ictericia hepática.",
+      "sample_size": 583,
+      "evidence_count": 144,
+      "method": "Correlación y Descubrimiento de Subgrupos",
+      "priority": 5.1369,
+      "supporting_variables": [
+        "TB"
+      ]
+    }
+  ]
+}

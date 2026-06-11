@@ -1,0 +1,12 @@
+{
+  "asset_id": "DB",
+  "impacted_cases": [],
+  "impacted_assets": [],
+  "influence_score": 6.0976,
+  "accuracy_drop_pct": 6.1,
+  "impact_level": "CRITICAL",
+  "description": "Si eliminamos DB del modelo:\n* La capacidad predictiva cae 6.1%\n* 25 pacientes dejan de clasificarse correctamente\n* Riesgo: CRITICAL\n\nRecomendación:\nMantener esta variable en futuros modelos.",
+  "risk_associated": "CRÍTICA",
+  "affected_patients": 25,
+  "recommendation": "Mantener DB como predictor principal en el panel clínico."
+}
