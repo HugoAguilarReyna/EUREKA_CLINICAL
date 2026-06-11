@@ -253,6 +253,25 @@ async def build_job(id: str):
         job["status"] = "failed"
         raise HTTPException(status_code=500, detail=f"Build failed: {str(e)}")
 
+@router.get("/system/debug")
+async def get_system_debug():
+    from pymongo import MongoClient
+    from backend.db.config import settings
+    mongo_client = MongoClient(settings.mongo_uri)
+    db = mongo_client[settings.mongo_db_name]
+    
+    return {
+        "cases_count": db["cases"].count_documents({}),
+        "dataset_metadata_count": db["dataset_metadata"].count_documents({}),
+        "patients_count": db["patients"].count_documents({}),
+        "dataset_history_count": db["DatasetHistory"].count_documents({}),
+        "semantic_graph_nodes_count": db["semantic_graph_nodes"].count_documents({}),
+        "semantic_graph_edges_count": db["semantic_graph_edges"].count_documents({}),
+        "patient_nodes_count": db["semantic_graph_nodes"].count_documents({"type": "Patient"}),
+        "rule_nodes_count": db["semantic_graph_nodes"].count_documents({"type": "Rule"}),
+        "community_nodes_count": db["semantic_graph_nodes"].count_documents({"type": "Community"})
+    }
+
 @router.get("/jobs/{id}/insights")
 async def get_job_insights(id: str):
     """
