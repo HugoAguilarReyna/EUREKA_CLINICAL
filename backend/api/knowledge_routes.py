@@ -35,13 +35,17 @@ async def run_intelligence_bootstrap():
     Runs the full end-to-end knowledge ingestion and decision intelligence pipeline.
     """
     # 1. Check if already loaded
-    from backend.graph.client import Neo4jClient
-    neo4j_client = Neo4jClient()
-    with neo4j_client.get_session() as session:
-        result = session.run("MATCH (n:DatasetMetadata {id: 'Dataset_Metadata_Global'}) RETURN n.rows as rows")
-        rec = result.single()
-        if rec and rec["rows"] > 0:
-            return {"success": True, "message": "Dataset already loaded. Skipping duplicate ingestion.", "dataset_rows": rec["rows"]}
+    try:
+        from pymongo import MongoClient
+        from backend.db.config import settings
+        mongo_client = MongoClient(settings.mongo_uri)
+        db = mongo_client[settings.mongo_db_name]
+        meta = db["dataset_metadata"].find_one({"id": "Dataset_Metadata_Global"})
+        if meta and meta.get("rows", 0) > 0:
+            return {"success": True, "message": "Dataset already loaded. Skipping duplicate ingestion.", "dataset_rows": meta["rows"]}
+    except Exception as e:
+        print(f"Error checking if dataset is loaded: {e}")
+        pass
             
     # 2. Read dataset file
     import os
