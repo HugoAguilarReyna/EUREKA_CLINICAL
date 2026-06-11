@@ -227,6 +227,20 @@ async def build_job(id: str):
             relationships=enriched_relationships
         )
         
+        # 6. Intelligence Pipeline (Rules, Communities, Insights)
+        from backend.intelligence.risk_engine import RiskEngine
+        from backend.intelligence.decision_engine import DecisionEngine
+        _risker = RiskEngine()
+        _decider = DecisionEngine()
+        
+        patterns = await _risker.mine_patterns()
+        insights = await _decider.get_all_insights()
+        
+        # 7. Semantic Propagation
+        from backend.semantic.semantic_graph_builder import SemanticGraphBuilder
+        builder = SemanticGraphBuilder()
+        builder.build_and_persist_graph()
+        
         job["status"] = "completed"
         return {
             "job_id": id,
