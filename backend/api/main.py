@@ -34,8 +34,8 @@ frontend_url = os.getenv("FRONTEND_URL", "https://eureka-frontend-210a.onrender.
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:5180", frontend_url],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
