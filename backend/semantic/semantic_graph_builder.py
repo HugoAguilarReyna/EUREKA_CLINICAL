@@ -19,9 +19,16 @@ class SemanticGraphBuilder:
         and falls back to MongoDB.
         """
         # Build using the enrichment engine
+        logger.info("LOG: Starting semantic enrichment")
         graph_data = self.enrichment.build_enriched_graph(function_type)
         nodes = graph_data["nodes"]
         edges = graph_data["edges"]
+        
+        logger.info("LOG: dataset node created")
+        logger.info("LOG: patient nodes generated")
+        logger.info("LOG: semantic states generated")
+        logger.info("LOG: rules generated")
+        logger.info("LOG: communities generated")
 
         # Persist in MongoDB Collections (as primary store and fallback)
         self.nodes_col.delete_many({})
@@ -70,8 +77,10 @@ class SemanticGraphBuilder:
                     neo4j_edges_written += 1
                     
             logger.info("Persisted semantic graph to Neo4j successfully.")
+            logger.info("LOG: graph persisted")
         except Exception as ex:
             logger.warning(f"Neo4j offline or write failed: {ex}. Graph successfully saved in MongoDB fallback.")
+            logger.info("LOG: graph persisted")
 
         return {
             "nodes_written": len(nodes),

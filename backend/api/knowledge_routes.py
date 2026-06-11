@@ -261,15 +261,20 @@ async def get_system_debug():
     db = mongo_client[settings.mongo_db_name]
     
     return {
-        "cases_count": db["cases"].count_documents({}),
-        "dataset_metadata_count": db["dataset_metadata"].count_documents({}),
-        "patients_count": db["patients"].count_documents({}),
-        "dataset_history_count": db["DatasetHistory"].count_documents({}),
-        "semantic_graph_nodes_count": db["semantic_graph_nodes"].count_documents({}),
-        "semantic_graph_edges_count": db["semantic_graph_edges"].count_documents({}),
-        "patient_nodes_count": db["semantic_graph_nodes"].count_documents({"type": "Patient"}),
-        "rule_nodes_count": db["semantic_graph_nodes"].count_documents({"type": "Rule"}),
-        "community_nodes_count": db["semantic_graph_nodes"].count_documents({"type": "Community"})
+        "collections": {
+            "semantic_graph_nodes": db["semantic_graph_nodes"].count_documents({}),
+            "semantic_graph_edges": db["semantic_graph_edges"].count_documents({}),
+            "cases": db["cases"].count_documents({}),
+            "dataset_history": db["DatasetHistory"].count_documents({})
+        },
+        "node_types": {
+            "Patient": db["semantic_graph_nodes"].count_documents({"type": "Patient"}),
+            "SemanticState": db["semantic_graph_nodes"].count_documents({"type": "SemanticState"}),
+            "Rule": db["semantic_graph_nodes"].count_documents({"type": "Rule"}),
+            "Community": db["semantic_graph_nodes"].count_documents({"type": "Community"}),
+            "Risk": db["semantic_graph_nodes"].count_documents({"type": "Risk"}),
+            "Action": db["semantic_graph_nodes"].count_documents({"type": "Action"})
+        }
     }
 
 @router.get("/jobs/{id}/insights")
