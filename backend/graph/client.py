@@ -9,10 +9,12 @@ class Neo4jClient:
         uri = os.getenv("NEO4J_URI", "bolt://neo4j:7687")
         user = os.getenv("NEO4J_USER", "neo4j")
         password = os.getenv("NEO4J_PASSWORD", "password")
+        # Configurable timeout — default 0.5s to avoid blocking startup on offline Neo4j
+        connection_timeout = float(os.getenv("NEO4J_CONNECTION_TIMEOUT", "0.5"))
         self.driver = GraphDatabase.driver(
-            uri, 
+            uri,
             auth=basic_auth(user, password),
-            connection_timeout=1.0,
+            connection_timeout=connection_timeout,
             max_connection_lifetime=2.0
         )
         if Neo4jClient._is_offline is None:

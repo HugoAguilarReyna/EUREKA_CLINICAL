@@ -13,9 +13,29 @@ from backend.copilot.knowledge_copilot import KnowledgeCopilot
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
 job_store = {}
-ingestion_svc = IngestionService()
-insight_engine = InsightEngine()
-copilot = KnowledgeCopilot()
+
+# Lazy initialization — avoids 9-15s Neo4j TCP timeout at import time (startup deadlock fix)
+_ingestion_svc = None
+_insight_engine = None
+_copilot = None
+
+def get_ingestion_svc() -> IngestionService:
+    global _ingestion_svc
+    if _ingestion_svc is None:
+        _ingestion_svc = IngestionService()
+    return _ingestion_svc
+
+def get_insight_engine() -> InsightEngine:
+    global _insight_engine
+    if _insight_engine is None:
+        _insight_engine = InsightEngine()
+    return _insight_engine
+
+def get_copilot() -> KnowledgeCopilot:
+    global _copilot
+    if _copilot is None:
+        _copilot = KnowledgeCopilot()
+    return _copilot
 
 class CopilotRequest(BaseModel):
     question: str
@@ -64,7 +84,7 @@ async def run_intelligence_bootstrap():
     file_type = "csv"
     
     # 3. Parse and Profile
-    parser = ingestion_svc.parsers[file_type]
+    parser = get_ingestion_svc().parsers[file_type]
     parsed_doc = parser(content, file_name)
     from backend.ingestion.profiling.schema_profiler import profile_schema
     profile = profile_schema(parsed_doc.content)
@@ -78,7 +98,7 @@ async def run_intelligence_bootstrap():
     enriched_entities, enriched_relationships = enrich_semantics(entities, relationships)
     
     # 5. Build Knowledge Graph
-    graph_result = ingestion_svc.graph_builder.build_and_persist(
+    graph_result = get_ingestion_svc().graph_builder.build_and_persist(
         entities=enriched_entities, relationships=enriched_relationships
     )
     
@@ -122,10 +142,10 @@ async def upload_file(file: UploadFile = File(...)):
     file_size_bytes = len(content)
     
     # We do a partial ingestion for preview
-    if file_type not in ingestion_svc.parsers:
+    if file_type not in get_ingestion_svc().parsers:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_type}")
         
-    parser = ingestion_svc.parsers[file_type]
+    parser = get_ingestion_svc().parsers[file_type]
     
     try:
         parsed_doc = parser(content, file.filename)
@@ -222,7 +242,7 @@ async def build_job(id: str):
         enriched_entities, enriched_relationships = enrich_semantics(entities, relationships)
         
         # 5. Graph Build
-        graph_result = ingestion_svc.graph_builder.build_and_persist(
+        graph_result = get_ingestion_svc().graph_builder.build_and_persist(
             entities=enriched_entities,
             relationships=enriched_relationships
         )
@@ -288,7 +308,7 @@ async def get_job_insights(id: str):
     if job_store[id]["status"] != "completed":
         raise HTTPException(status_code=400, detail="Job must be completed to generate insights")
         
-    insights = insight_engine.generate_insights(profile=job_store[id].get("profile"))
+    insights = get_insight_engine().generate_insights(profile=job_store[id].get("profile"))
     return {"job_id": id, "insights": [i.model_dump() for i in insights]}
 
 import time
@@ -300,7 +320,7 @@ async def run_copilot(req: CopilotRequest):
     Accepts JSON `{"question": "..."}` and returns answer from `KnowledgeCopilot`.
     """
     t0 = time.time()
-    result = copilot.ask(req.question)
+    result = get_copilot().ask(req.question)
     execution_time_ms = (time.time() - t0) * 1000
     
     payload_size_bytes = len(str(result))

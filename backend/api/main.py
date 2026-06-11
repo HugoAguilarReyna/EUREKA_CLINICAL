@@ -16,8 +16,13 @@ async def lifespan(app: FastAPI):
     try:
         from backend.graph.sync.graph_sync_service import GraphSyncService
         sync_service = GraphSyncService()
-        sync_service.start_change_stream()
-        print("Graph Sync Service started change streams successfully.")
+        # Change streams require MongoDB replica set (not supported on Atlas M0 free tier).
+        # Enable only when ENABLE_CHANGE_STREAMS=true is set in environment.
+        if os.getenv("ENABLE_CHANGE_STREAMS", "false").lower() == "true":
+            sync_service.start_change_stream()
+            print("Graph Sync Service started change streams successfully.")
+        else:
+            print("Change streams disabled (ENABLE_CHANGE_STREAMS != true). Skipping.")
     except Exception as e:
         print(f"Failed to start Graph Sync Service: {e}")
         
