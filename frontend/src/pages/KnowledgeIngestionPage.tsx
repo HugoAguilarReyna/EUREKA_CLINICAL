@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { PageContainer } from '../components/layout/PageContainer';
 import { UploadCloud, File as FileIcon, AlertCircle, CheckCircle, Settings, Play } from 'lucide-react';
 
@@ -7,7 +9,9 @@ export const KnowledgeIngestionPage = () => {
   const [status, setStatus] = useState<'idle' | 'uploading' | 'preview' | 'building' | 'done'>('idle');
   const [jobId, setJobId] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<any>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -25,31 +29,60 @@ export const KnowledgeIngestionPage = () => {
   const handleUpload = async () => {
     if (!file) return;
     setStatus('uploading');
+    setUploadError(null);
     
-    // Simulate API call to POST /knowledge/upload
-    setTimeout(() => {
-      setStatus('preview');
-      setJobId('job-' + Math.random().toString(36).substr(2, 9));
-      setPreviewData({
-        columns: ['id', 'title', 'description', 'author', 'timestamp'],
-        entities: 45,
-        relations: 120,
-        qualityIssues: [
-          { type: 'missing_values', count: 3, column: 'author' },
-          { type: 'format_warning', count: 1, column: 'timestamp' }
-        ]
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/knowledge/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-    }, 1500);
+      
+      setJobId(res.data.job_id);
+      setPreviewData({
+        columns: res.data.metadata?.profile?.schema?.columns?.map((c: any) => c.name) || [],
+        entities: res.data.metadata?.profile?.entities_detected || 0,
+        relations: res.data.metadata?.profile?.relations_detected || 0,
+        qualityIssues: res.data.metadata?.profile?.quality_issues || []
+      });
+      setStatus('preview');
+    } catch (err: any) {
+      console.error(err);
+      setUploadError(err.response?.data?.detail || err.message || "Unknown error during upload");
+      setStatus('idle');
+    }
   };
 
   const handleBuildGraph = async () => {
     if (!jobId) return;
     setStatus('building');
+    setUploadError(null);
     
-    // Simulate API call to POST /knowledge/jobs/{id}/build
-    setTimeout(() => {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/knowledge/jobs/${jobId}/build`);
       setStatus('done');
-    }, 2000);
+      // Navigate to recovery dashboard after successful ingestion
+      setTimeout(() => navigate('/recovery'), 2000);
+    } catch (err: any) {
+      console.error(err);
+      setUploadError(err.response?.data?.detail || err.message || "Unknown error during graph build");
+      setStatus('preview');
+    }
+  };
+
+  const handleLoadSample = async () => {
+    setStatus('building');
+    setUploadError(null);
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/knowledge/bootstrap`);
+      setStatus('done');
+      setTimeout(() => navigate('/recovery'), 2000);
+    } catch (err: any) {
+      console.error(err);
+      setUploadError(err.response?.data?.detail || err.message || "Error bootstrapping sample dataset");
+      setStatus('idle');
+    }
   };
 
   return (
@@ -92,6 +125,25 @@ export const KnowledgeIngestionPage = () => {
                 >
                   {status === 'uploading' ? 'Uploading...' : 'Upload File'}
                 </button>
+              </div>
+            )}
+            
+            <div className="mt-8 pt-8 border-t border-gray-700">
+              <h3 className="text-sm font-medium text-gray-400 mb-4">Production Testing</h3>
+              <button
+                onClick={handleLoadSample}
+                disabled={status === 'building'}
+                className="w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <Play size={16} />
+                {status === 'building' ? 'Provisioning Environment...' : 'Load ILPD Sample Dataset (One-Click Provisioning)'}
+              </button>
+            </div>
+            
+            {uploadError && (
+              <div className="mt-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg flex items-center gap-3 text-red-400 text-sm text-left">
+                <AlertCircle />
+                <p>{uploadError}</p>
               </div>
             )}
           </div>

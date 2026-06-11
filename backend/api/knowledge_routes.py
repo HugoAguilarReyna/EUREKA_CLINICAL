@@ -20,6 +20,79 @@ copilot = KnowledgeCopilot()
 class CopilotRequest(BaseModel):
     question: str
 
+@router.post("/bootstrap")
+async def bootstrap_dataset():
+    """
+    Idempotent one-click provisioning endpoint.
+    Loads the ILPD (act_liver_disease.csv) dataset if not already loaded,
+    and runs the full ingestion and intelligence pipeline.
+    """
+    return await run_intelligence_bootstrap()
+
+@router.post("/intelligence/bootstrap")
+async def run_intelligence_bootstrap():
+    """
+    Runs the full end-to-end knowledge ingestion and decision intelligence pipeline.
+    """
+    # 1. Check if already loaded
+    from backend.graph.client import Neo4jClient
+    neo4j_client = Neo4jClient()
+    with neo4j_client.get_session() as session:
+        result = session.run("MATCH (n:DatasetMetadata {id: 'Dataset_Metadata_Global'}) RETURN n.rows as rows")
+        rec = result.single()
+        if rec and rec["rows"] > 0:
+            return {"success": True, "message": "Dataset already loaded. Skipping duplicate ingestion.", "dataset_rows": rec["rows"]}
+            
+    # 2. Read dataset file
+    import os
+    raw_path = os.path.join(os.path.dirname(os.path.dirname(__dirname__)), "act_liver_disease.csv")
+    if not os.path.exists(raw_path):
+        raw_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "act_liver_disease.csv")
+        
+    with open(raw_path, "rb") as f:
+        content = f.read()
+        
+    file_name = "act_liver_disease.csv"
+    file_type = "csv"
+    
+    # 3. Parse and Profile
+    parser = ingestion_svc.parsers[file_type]
+    parsed_doc = parser(content, file_name)
+    from backend.ingestion.profiling.schema_profiler import profile_schema
+    profile = profile_schema(parsed_doc.content)
+    
+    # 4. Ontology & Semantic Enrichment
+    from backend.ingestion.ontology.ontology_builder import build_ontology
+    from backend.ingestion.semantic.semantic_enricher import enrich_semantics
+    entities, relationships = build_ontology(
+        content=parsed_doc.content, file_type=parsed_doc.file_type, file_name=parsed_doc.file_name, profile=profile
+    )
+    enriched_entities, enriched_relationships = enrich_semantics(entities, relationships)
+    
+    # 5. Build Knowledge Graph
+    graph_result = ingestion_svc.graph_builder.build_and_persist(
+        entities=enriched_entities, relationships=enriched_relationships
+    )
+    
+    # 6. Intelligence Pipeline (Rules, Communities, Insights)
+    from backend.intelligence.risk_engine import RiskEngine
+    from backend.intelligence.decision_engine import DecisionEngine
+    _risker = RiskEngine()
+    _decider = DecisionEngine()
+    
+    patterns = await _risker.mine_patterns()
+    insights = await _decider.get_all_insights()
+    
+    return {
+        "success": True,
+        "dataset_rows": len(parsed_doc.content),
+        "rules": len(patterns.get("rules", [])),
+        "communities": len(patterns.get("subgroups", [])),
+        "graph_nodes": len(enriched_entities),
+        "graph_edges": len(enriched_relationships),
+        "insights_generated": len(insights)
+    }
+
 @router.post("/upload", response_model=UploadJobDTO)
 async def upload_file(file: UploadFile = File(...)):
     """
