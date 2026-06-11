@@ -45,9 +45,13 @@ async def run_intelligence_bootstrap():
             
     # 2. Read dataset file
     import os
-    raw_path = os.path.join(os.path.dirname(os.path.dirname(__dirname__)), "act_liver_disease.csv")
+    raw_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "raw", "act_liver_disease.csv")
     if not os.path.exists(raw_path):
-        raw_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "act_liver_disease.csv")
+        # Fallback to root if not in backend/data/raw
+        raw_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "act_liver_disease.csv")
+        
+    if not os.path.exists(raw_path):
+        return {"success": False, "message": f"Dataset file not found at {raw_path}", "dataset_rows": 0}
         
     with open(raw_path, "rb") as f:
         content = f.read()
