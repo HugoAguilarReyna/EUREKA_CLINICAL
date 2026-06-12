@@ -80,6 +80,20 @@ export const FuzzyMembershipExplorer = () => {
   const [fnType, setFnType] = useState<'triangular' | 'trapezoidal' | 'gaussian'>('triangular');
   const [membershipData, setMembershipData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [patientsList, setPatientsList] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/cases?limit=1000`);
+        const ids = (res.data || []).map((c: any) => c.patient_id).filter(Boolean);
+        setPatientsList(ids);
+      } catch (err) {
+        console.error("Error fetching patients list", err);
+      }
+    };
+    fetchPatients();
+  }, []);
 
   useEffect(() => {
     const fetchMemberships = async () => {
@@ -167,12 +181,19 @@ export const FuzzyMembershipExplorer = () => {
         <div className="glassmorphism p-6 rounded-2xl border border-white/5 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
           <div>
             <label className="text-xs uppercase font-bold text-gray-500 block mb-1">Paciente</label>
-            <input 
-              type="text" 
+            <select 
               value={patientId}
               onChange={(e) => setPatientId(e.target.value)}
               className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-white font-mono w-full focus:outline-none focus:border-blue-500"
-            />
+            >
+              {patientsList.length === 0 ? (
+                <option value={patientId}>{patientId}</option>
+              ) : (
+                patientsList.map(pid => (
+                  <option key={pid} value={pid}>{pid}</option>
+                ))
+              )}
+            </select>
           </div>
           <div>
             <label className="text-xs uppercase font-bold text-gray-500 block mb-1">Biomarcador</label>
