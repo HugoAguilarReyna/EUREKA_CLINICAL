@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { PageContainer } from '../components/layout/PageContainer';
 import { useExplainability } from '../hooks';
 import { Search, Share2, ShieldAlert, FileText, CheckCircle, AlertTriangle, ArrowRight, Activity } from 'lucide-react';
@@ -7,6 +8,28 @@ export const ExplainabilityPage = () => {
   const [queryId, setQueryId] = useState<string>('Patient_5');
   const [searchVal, setSearchVal] = useState<string>('Patient_5');
   const { data, isLoading, error } = useExplainability(queryId);
+
+  const [casesList, setCasesList] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/cases?limit=1000`);
+        setCasesList(res.data || []);
+      } catch (err) {
+        console.error("Error fetching cases list", err);
+      }
+    };
+    fetchCases();
+  }, []);
+
+  const uniqueStatuses = Array.from(new Set(casesList.map(c => c.status).filter(Boolean)));
+  const filteredCases = statusFilter === 'ALL' ? casesList : casesList.filter(c => c.status === statusFilter);
+  // Optional: Extract unique risk classes as well for better filtering if status is just "COMPLETED"
+  const uniqueRisks = Array.from(new Set(casesList.map(c => c.risk_class).filter(Boolean)));
+  const filteredByRisk = statusFilter === 'ALL' ? casesList : casesList.filter(c => c.risk_class === statusFilter || c.status === statusFilter);
+  const filterOptions = Array.from(new Set([...uniqueStatuses, ...uniqueRisks]));
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,15 +41,37 @@ export const ExplainabilityPage = () => {
   return (
     <PageContainer title="Explainability Explorer">
       <div className="max-w-5xl mx-auto space-y-6">
-        <form onSubmit={handleSearch} className="flex gap-4">
-          <input 
-            type="text" 
-            value={searchVal}
-            onChange={(e) => setSearchVal(e.target.value)}
-            placeholder="Enter Patient ID (e.g. Patient_5) or Case ID..."
-            className="flex-1 bg-surface/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
-          />
-          <button type="submit" className="bg-blue-500 hover:bg-blue-600 px-6 rounded-lg font-medium flex items-center gap-2 transition-colors text-white">
+        <form onSubmit={handleSearch} className="flex gap-4 items-center glassmorphism p-4 border border-white/5 rounded-xl">
+          <div className="flex-1">
+             <select 
+               value={searchVal}
+               onChange={(e) => setSearchVal(e.target.value)}
+               className="w-full bg-surface/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+             >
+                {casesList.length === 0 && <option value={searchVal}>{searchVal}</option>}
+                {filteredByRisk.map(c => (
+                  <option key={c.case_id} value={c.patient_id}>{c.patient_id} - {c.risk_class || c.status}</option>
+                ))}
+             </select>
+          </div>
+          <div className="w-48">
+             <select 
+               value={statusFilter}
+               onChange={(e) => {
+                 setStatusFilter(e.target.value);
+                 // auto-select first in new list
+                 const newFiltered = e.target.value === 'ALL' ? casesList : casesList.filter(c => c.risk_class === e.target.value || c.status === e.target.value);
+                 if (newFiltered.length > 0) setSearchVal(newFiltered[0].patient_id);
+               }}
+               className="w-full bg-surface/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+             >
+                <option value="ALL">Todos (Status / Risk)</option>
+                {filterOptions.map(s => (
+                  <option key={s as string} value={s as string}>{s}</option>
+                ))}
+             </select>
+          </div>
+          <button type="submit" className="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors text-white h-full">
             <Search size={18} />
             Explain
           </button>
