@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
-import { Activity, PlayCircle } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || '';
 
@@ -9,12 +8,18 @@ const API = import.meta.env.VITE_API_URL || '';
 interface Overview {
   mission_status: string;
   health_score: number;
-  narrative: string;
+  timestamp: number;
   root_cause: {
     driver: string;
     impact: number;
     confidence: number;
     affected_patients: number;
+    ground_truth_audit: {
+      source_rule: string;
+      support: number;
+      confidence: number;
+      lift: number;
+    };
   };
   priority_alerts: {
     id: string;
@@ -28,35 +33,16 @@ interface Overview {
   top_drivers: { name: string; impact: number }[];
   ground_truth_audit: {
     patient_count: number;
-    top_action_audit: { value: number };
+    top_action_audit: { value: number; source_rule: string; support: number; confidence: number };
   };
-  timestamp: number;
 }
 
-interface RuleConsistency {
+interface RuleRow {
   rule: string;
   support: number;
   confidence: number;
   lift: number;
   patient_count: number;
-}
-
-interface HealthScoreAudit {
-  health_score: number;
-  baseline: number;
-  penalties: {
-    rule: string;
-    affected_patients: number;
-    confidence: number;
-    weight: number;
-    penalty: number;
-  }[];
-}
-
-interface CriticalPopulation {
-  critical_patients: number;
-  total_patients: number;
-  top_trigger_rules: string[];
 }
 
 interface SimResult {
@@ -71,364 +57,525 @@ interface SimResult {
   critical_risks_delta: number;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+interface HealthAudit {
+  health_score: number;
+  baseline: number;
+  penalties: { rule: string; affected_patients: number; confidence: number; weight: number; penalty: number }[];
+}
+
+interface CritPop {
+  critical_patients: number;
+  total_patients: number;
+  top_trigger_rules: string[];
+}
+
+// ── Palette ────────────────────────────────────────────────────────────────
+const C = {
+  bg: '#05070A',
+  panel: '#0B1118',
+  border: '#1E293B',
+  text: '#E5E7EB',
+  muted: '#94A3B8',
+  dim: '#475569',
+  pos: '#22C55E',
+  warn: '#F59E0B',
+  crit: '#EF4444',
+  blue: '#60A5FA',
+  purple: '#A78BFA',
+};
+
+const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
 
 const statusColor = (s: string) => {
-  if (s === 'GREEN') return '#22C55E';
-  if (s === 'YELLOW') return '#F59E0B';
+  if (s === 'GREEN') return C.pos;
+  if (s === 'YELLOW') return C.warn;
   if (s === 'ORANGE') return '#F97316';
-  return '#EF4444'; // RED / default
+  return C.crit;
 };
 
-const fmtTs = (ts: number) => {
-  if (!ts) return '—';
-  return new Date(ts * 1000).toLocaleTimeString('en-US', { hour12: false });
+const fmtTs = (ts: number) =>
+  ts ? new Date(ts * 1000).toISOString().substring(11, 16) + ' UTC' : '—';
+
+const delta = (v: number) => (v > 0 ? `+${v}` : `${v}`);
+
+// ── Shared styles ──────────────────────────────────────────────────────────
+const panel: React.CSSProperties = {
+  background: C.panel,
+  border: `1px solid ${C.border}`,
+  overflow: 'auto',
+  padding: 10,
 };
 
-const delta = (v: number) => (v > 0 ? `+${v}` : String(v));
+const sectionLabel = (text: string) => (
+  <div style={{ color: C.dim, fontSize: '0.68rem', letterSpacing: 3, marginBottom: 8, ...mono }}>
+    {text}
+  </div>
+);
+
+const TH = ({ children }: { children: React.ReactNode }) => (
+  <th style={{ border: `1px solid ${C.border}`, padding: '3px 6px', textAlign: 'left', color: C.dim, fontWeight: 600, background: C.bg, ...mono, fontSize: '0.72rem' }}>
+    {children}
+  </th>
+);
+
+const TD = ({ children, color = C.text }: { children: React.ReactNode; color?: string }) => (
+  <td style={{ border: `1px solid ${C.border}`, padding: '3px 6px', color, ...mono, fontSize: '0.73rem' }}>
+    {children}
+  </td>
+);
 
 // ── Component ──────────────────────────────────────────────────────────────
-
 export const DashboardPage = () => {
-  // ── State ────────────────────────────────────────────────────────────────
   const [overview, setOverview] = useState<Overview | null>(null);
-  const [ruleConsistency, setRuleConsistency] = useState<RuleConsistency[]>([]);
-  const [healthAudit, setHealthAudit] = useState<HealthScoreAudit | null>(null);
-  const [criticalPop, setCriticalPop] = useState<CriticalPopulation | null>(null);
+  const [rules, setRules] = useState<RuleRow[]>([]);
+  const [healthAudit, setHealthAudit] = useState<HealthAudit | null>(null);
+  const [critPop, setCritPop] = useState<CritPop | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Digital Twin
-  const [simVariable, setSimVariable] = useState('Alkphos');
-  const [simChange, setSimChange] = useState(-20);
-  const [simulating, setSimulating] = useState(false);
+  // Simulator
+  const [simVar, setSimVar] = useState('Alkphos');
+  const [simPct, setSimPct] = useState(-20);
+  const [simRunning, setSimRunning] = useState(false);
   const [simResult, setSimResult] = useState<SimResult | null>(null);
-  const [simError, setSimError] = useState(false);
+  const [simFailed, setSimFailed] = useState(false);
 
-  // Audit Inspector
+  // Audit
   const [auditOpen, setAuditOpen] = useState(false);
 
-  // ── Fetch all data ───────────────────────────────────────────────────────
+  // ── Fetch ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const load = async () => {
+    (async () => {
       try {
-        const [ovRes, rcRes, hsRes, cpRes] = await Promise.all([
+        const [ov, rc, hs, cp] = await Promise.all([
           fetch(`${API}/knowledge/executive/overview`),
           fetch(`${API}/knowledge/executive/audit/rule-consistency`),
           fetch(`${API}/knowledge/executive/audit/health-score`),
           fetch(`${API}/knowledge/executive/audit/critical-population`),
         ]);
-        if (!ovRes.ok) throw new Error('overview failed');
-        setOverview(await ovRes.json());
-        if (rcRes.ok) setRuleConsistency(await rcRes.json());
-        if (hsRes.ok) setHealthAudit(await hsRes.json());
-        if (cpRes.ok) setCriticalPop(await cpRes.json());
+        if (!ov.ok) throw new Error('overview failed');
+        setOverview(await ov.json());
+        if (rc.ok) setRules(await rc.json());
+        if (hs.ok) setHealthAudit(await hs.json());
+        if (cp.ok) setCritPop(await cp.json());
       } catch {
-        setError('Error connecting to Executive Console Backend');
+        setFetchError('Error connecting to Executive Console Backend');
       } finally {
         setLoading(false);
       }
-    };
-    load();
+    })();
   }, []);
 
-  // ── Simulation ───────────────────────────────────────────────────────────
-  const runSimulation = useCallback(async () => {
-    if (!overview) return;
-    setSimulating(true);
-    setSimError(false);
+  const runSim = useCallback(async () => {
+    setSimRunning(true);
+    setSimFailed(false);
+    setSimResult(null);
     try {
       const res = await fetch(`${API}/knowledge/executive/twin-simulate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          modifications: [{ variable: simVariable, change_pct: simChange }],
-        }),
+        body: JSON.stringify({ modifications: [{ variable: simVar, change_pct: simPct }] }),
       });
-      if (res.ok) {
-        setSimResult(await res.json());
-      } else {
-        setSimError(true);
-      }
+      if (res.ok) setSimResult(await res.json());
+      else setSimFailed(true);
     } catch {
-      setSimError(true);
+      setSimFailed(true);
     } finally {
-      setSimulating(false);
+      setSimRunning(false);
     }
-  }, [overview, simVariable, simChange]);
+  }, [simVar, simPct]);
 
-  // ── Loading / Error gates ────────────────────────────────────────────────
+  // ── Gates ────────────────────────────────────────────────────────────────
   if (loading) return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono, monospace', color: '#60A5FA', background: '#05070A' }}>
-      INITIALIZING EXECUTIVE CONSOLE...
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg, color: C.blue, ...mono }}>
+      INITIALIZING DECISION CENTER...
     </div>
   );
-  if (error || !overview) return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono, monospace', color: '#EF4444', background: '#05070A' }}>
-      {error || 'No data'}
+  if (fetchError || !overview) return (
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg, color: C.crit, ...mono }}>
+      {fetchError ?? 'NO DATA'}
     </div>
   );
 
-  // ── Derived values (real fields only) ───────────────────────────────────
+  // ── Derived ──────────────────────────────────────────────────────────────
   const sc = statusColor(overview.mission_status);
   const patients = overview.ground_truth_audit?.patient_count ?? '—';
-  const primaryDriver = overview.root_cause?.driver ?? '—';
-  const confidence = overview.root_cause?.confidence != null
+  const driver = overview.root_cause?.driver ?? '—';
+  const conf = overview.root_cause?.confidence != null
     ? `${Math.round(overview.root_cause.confidence * 100)}%` : '—';
   const bestAction = overview.priority_alerts?.[0]?.title ?? '—';
-  const expectedImprovement = overview.ground_truth_audit?.top_action_audit?.value != null
-    ? `${overview.ground_truth_audit.top_action_audit.value.toFixed(1)}` : '—';
+  const bestActionDesc = overview.priority_alerts?.[0]?.description ?? '';
+  const bestActionConf = overview.priority_alerts?.[0]?.confidence != null
+    ? `${Math.round(overview.priority_alerts[0].confidence * 100)}%` : '—';
+  const bestActionPts = overview.priority_alerts?.[0]?.population_affected ?? '—';
+  const topActionVal = overview.ground_truth_audit?.top_action_audit?.value;
+  const expectedImprovement = topActionVal != null ? `${topActionVal.toFixed(0)} PTS` : '—';
   const lastUpdate = fmtTs(overview.timestamp);
-
-  // Root Cause table: top_drivers joined with rule-consistency by driver name
-  const rcMap: Record<string, RuleConsistency> = {};
-  ruleConsistency.forEach(r => {
-    // rule names like RULE_3_Alkphos_HIGH → extract driver name segment
-    const parts = r.rule.split('_');
-    // e.g. ["RULE","3","Alkphos","HIGH"] → driver is parts[2]
-    const driverKey = parts.slice(2, parts.length - 1).join('_');
-    rcMap[driverKey] = r;
-  });
-
-  // Top 3 actions from priority_alerts
   const top3 = overview.priority_alerts?.slice(0, 3) ?? [];
 
+  // Rule consistency map keyed by driver name segment
+  const ruleMap: Record<string, RuleRow> = {};
+  rules.forEach(r => {
+    const parts = r.rule.split('_');
+    const key = parts.slice(2, parts.length - 1).join('_');
+    ruleMap[key] = r;
+  });
+
   return (
-    <PageContainer title="Executive Decision Console">
-      {/* ── MISSION BAND ─────────────────────────────────────────────────── */}
+    <PageContainer title="EUREKA DECISION CENTER">
+
+      {/* ══════════════════════════════════════════════════════════════
+          ROW 1 — MISSION BAND
+      ══════════════════════════════════════════════════════════════ */}
       <div style={{
-        height: 72,
-        background: '#0B1118',
-        borderBottom: '1px solid #1E293B',
+        height: 56,
+        background: C.panel,
+        borderBottom: `1px solid ${C.border}`,
         display: 'flex',
         alignItems: 'center',
-        padding: '0 16px',
-        gap: 24,
-        fontFamily: 'IBM Plex Mono, monospace',
-        fontSize: '0.78rem',
+        padding: '0 12px',
+        gap: 28,
         overflowX: 'auto',
         flexShrink: 0,
-        marginBottom: 8,
+        marginBottom: 6,
+        ...mono,
+        fontSize: '0.76rem',
       }}>
-        {[
+        {([
           ['STATUS', <span style={{ color: sc, fontWeight: 700 }}>{overview.mission_status}</span>],
           ['HEALTH SCORE', <span style={{ color: sc, fontWeight: 700 }}>{overview.health_score}</span>],
-          ['PATIENTS', <span style={{ color: '#E5E7EB' }}>{patients}</span>],
-          ['PRIMARY DRIVER', <span style={{ color: '#F59E0B' }}>{primaryDriver}</span>],
-          ['CONFIDENCE', <span style={{ color: '#22C55E' }}>{confidence}</span>],
-          ['BEST ACTION', <span style={{ color: '#60A5FA' }}>{bestAction}</span>],
-          ['EXPECTED IMPROVEMENT', <span style={{ color: '#A78BFA' }}>{expectedImprovement}</span>],
-          ['LAST UPDATE', <span style={{ color: '#94A3B8' }}>{lastUpdate}</span>],
-        ].map(([label, val], i) => (
+          ['PATIENTS', <span style={{ color: C.text }}>{patients}</span>],
+          ['DRIVER', <span style={{ color: C.warn }}>{driver.toUpperCase()}</span>],
+          ['CONFIDENCE', <span style={{ color: C.pos }}>{conf}</span>],
+          ['ACTION', <span style={{ color: C.blue }}>{bestAction.toUpperCase()}</span>],
+          ['IMPROVEMENT', <span style={{ color: C.purple }}>{expectedImprovement}</span>],
+          ['UPDATED', <span style={{ color: C.muted }}>{lastUpdate}</span>],
+        ] as [string, React.ReactNode][]).map(([label, val], i) => (
           <div key={i} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-            <span style={{ color: '#475569', marginRight: 6 }}>{label}:</span>
-            {val}
+            <span style={{ color: C.dim, marginRight: 5 }}>{label}:</span>{val}
           </div>
         ))}
       </div>
 
-      {/* ── MAIN GRID 20 / 50 / 30 ───────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════
+          ROW 2 — DECISION GRID  25 | 45 | 30
+      ══════════════════════════════════════════════════════════════ */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '20% 50% 30%',
-        gap: 8,
-        height: 'calc(100vh - 72px - 64px - 16px)', // band + PageContainer header + gaps
-        padding: '0 8px',
-        fontFamily: 'IBM Plex Mono, monospace',
-        fontSize: '0.8rem',
+        gridTemplateColumns: '25% 45% 30%',
+        gap: 6,
+        height: 'calc(100vh - 56px - 80px - 64px - 24px)',
+        padding: '0 6px',
+        minHeight: 320,
       }}>
-        {/* ── LEFT: ROOT CAUSE ANALYSIS ──────────────────────────────────── */}
-        <div style={{ background: '#0B1118', border: '1px solid #1E293B', overflow: 'auto', padding: 8 }}>
-          <div style={{ color: '#475569', fontSize: '0.7rem', marginBottom: 8, letterSpacing: 2 }}>ROOT CAUSE ANALYSIS</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+
+        {/* ── LEFT: WHY IS THIS HAPPENING? ──────────────────────────── */}
+        <div style={panel}>
+          {sectionLabel('WHY IS THIS HAPPENING?  —  ROOT CAUSE ANALYSIS')}
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#05070A' }}>
-                {['Rank', 'Driver', 'Impact', 'Patients', 'Conf', 'Lift'].map(h => (
-                  <th key={h} style={{ border: '1px solid #1E293B', padding: '3px 5px', textAlign: 'left', color: '#475569', fontWeight: 600 }}>{h}</th>
-                ))}
+              <tr>
+                <TH>#</TH><TH>Driver</TH><TH>Impact</TH>
+                <TH>Support</TH><TH>Conf</TH><TH>Lift</TH>
               </tr>
             </thead>
             <tbody>
-              {(overview.top_drivers ?? []).map((d, i) => {
-                const rc = rcMap[d.name] ?? null;
+              {overview.top_drivers.map((d, i) => {
+                const rc = ruleMap[d.name];
                 return (
-                  <tr key={d.name} style={{ borderBottom: '1px solid #1E293B' }}>
-                    <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#94A3B8' }}>{i + 1}</td>
-                    <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#F59E0B', fontWeight: 700 }}>{d.name}</td>
-                    <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#EF4444' }}>{d.impact}%</td>
-                    <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#E5E7EB' }}>{rc?.patient_count ?? '—'}</td>
-                    <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#22C55E' }}>{rc ? `${Math.round(rc.confidence * 100)}%` : '—'}</td>
-                    <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#94A3B8' }}>{rc?.lift ?? '—'}</td>
+                  <tr key={d.name} style={{ background: i % 2 === 0 ? C.bg : 'transparent' }}>
+                    <TD color={C.muted}>{i + 1}</TD>
+                    <TD color={C.warn}>{d.name}</TD>
+                    <TD color={C.crit}>{d.impact}%</TD>
+                    <TD color={C.text}>{rc?.support ?? '—'}</TD>
+                    <TD color={C.pos}>{rc ? `${Math.round(rc.confidence * 100)}%` : '—'}</TD>
+                    <TD color={C.muted}>{rc?.lift ?? '—'}</TD>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+
+          {/* Root cause detail */}
+          <div style={{ marginTop: 12, padding: 8, background: C.bg, border: `1px solid ${C.border}` }}>
+            <div style={{ color: C.dim, fontSize: '0.68rem', letterSpacing: 2, marginBottom: 6, ...mono }}>PRIMARY ROOT CAUSE</div>
+            <div style={{ color: C.warn, fontSize: '1rem', fontWeight: 700, ...mono }}>{overview.root_cause.driver}</div>
+            <div style={{ color: C.muted, fontSize: '0.72rem', marginTop: 4, ...mono }}>
+              Impact: {overview.root_cause.impact}% &nbsp;|&nbsp;
+              Patients: {overview.root_cause.affected_patients} &nbsp;|&nbsp;
+              Conf: {Math.round(overview.root_cause.confidence * 100)}%
+            </div>
+            {overview.root_cause.ground_truth_audit && (
+              <div style={{ color: C.dim, fontSize: '0.68rem', marginTop: 4, ...mono }}>
+                Rule: {overview.root_cause.ground_truth_audit.source_rule} &nbsp;|&nbsp;
+                Lift: {overview.root_cause.ground_truth_audit.lift}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* ── CENTER: DIGITAL TWIN ───────────────────────────────────────── */}
-        <div style={{ background: '#0B1118', border: '1px solid #1E293B', overflow: 'auto', padding: 12 }}>
-          <div style={{ color: '#475569', fontSize: '0.7rem', marginBottom: 12, letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Activity size={12} /> DIGITAL TWIN SIMULATOR
-          </div>
+        {/* ── CENTER: WHAT HAPPENS IF WE ACT? ───────────────────────── */}
+        <div style={panel}>
+          {sectionLabel('WHAT HAPPENS IF WE ACT?  —  DIGITAL TWIN SIMULATOR')}
 
-          {/* Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          {/* Scenario controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div style={{ color: C.dim, fontSize: '0.7rem', ...mono }}>SCENARIO</div>
             <select
-              value={simVariable}
-              onChange={e => setSimVariable(e.target.value)}
-              style={{ background: '#05070A', border: '1px solid #1E293B', color: '#E5E7EB', padding: '4px 6px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.78rem' }}
+              value={simVar}
+              onChange={e => setSimVar(e.target.value)}
+              style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.text, padding: '3px 6px', ...mono, fontSize: '0.75rem', cursor: 'pointer' }}
             >
-              {(overview.top_drivers ?? []).map(d => (
+              {overview.top_drivers.map(d => (
                 <option key={d.name} value={d.name}>{d.name}</option>
               ))}
             </select>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 120 }}>
               <input
-                type="range" min={-50} max={50} step={5} value={simChange}
-                onChange={e => setSimChange(parseInt(e.target.value))}
-                style={{ width: '100%', accentColor: '#60A5FA' }}
+                type="range" min={-50} max={50} step={5} value={simPct}
+                onChange={e => setSimPct(parseInt(e.target.value))}
+                style={{ width: '100%', accentColor: C.blue }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#475569' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: C.dim, ...mono }}>
                 <span>-50%</span>
-                <span style={{ color: '#60A5FA' }}>{simChange > 0 ? '+' : ''}{simChange}%</span>
+                <span style={{ color: C.blue }}>{simPct > 0 ? '+' : ''}{simPct}%</span>
                 <span>+50%</span>
               </div>
             </div>
             <button
-              onClick={runSimulation}
-              disabled={simulating}
-              style={{ background: '#1D4ED8', border: 'none', color: '#fff', padding: '6px 12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.78rem', cursor: simulating ? 'not-allowed' : 'pointer', opacity: simulating ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: 4 }}
+              onClick={runSim}
+              disabled={simRunning}
+              style={{
+                background: simRunning ? C.dim : C.blue,
+                border: 'none', color: C.bg,
+                padding: '5px 14px', ...mono,
+                fontSize: '0.75rem', fontWeight: 700,
+                cursor: simRunning ? 'not-allowed' : 'pointer',
+              }}
             >
-              <PlayCircle size={14} /> {simulating ? 'SIMULATING...' : 'SIMULATE'}
+              {simRunning ? 'RUNNING...' : 'SIMULATE'}
             </button>
           </div>
 
-          {/* Simulation result */}
-          {simError && (
-            <pre style={{ color: '#94A3B8', fontSize: '0.8rem' }}>SIMULATION DATA NOT AVAILABLE</pre>
-          )}
-          {!simResult && !simError && (
-            <pre style={{ color: '#475569', fontSize: '0.78rem' }}>
-{`CURRENT STATE
-  Critical Patients : ${overview.ground_truth_audit?.patient_count ?? '—'}
-  Health Score      : ${overview.health_score}
-  Primary Driver    : ${primaryDriver}
+          {/* State display */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
 
-Press SIMULATE to project outcomes.`}
-            </pre>
-          )}
-          {simResult && !simError && (
-            <pre style={{ color: '#E5E7EB', fontSize: '0.8rem', lineHeight: 1.7 }}>
-{`CURRENT STATE
-  Critical Patients : ${simResult.baseline_critical_patients}
-  Critical Risks    : ${simResult.baseline_critical_risks}
-  Health Score      : ${simResult.baseline_health_score}
+            {/* CURRENT STATE */}
+            <div style={{ background: C.bg, border: `1px solid ${C.border}`, padding: 10 }}>
+              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: 2, marginBottom: 8, ...mono }}>CURRENT STATE</div>
+              <div style={{ color: C.muted, fontSize: '0.7rem', ...mono, marginBottom: 4 }}>Critical Patients</div>
+              <div style={{ color: C.crit, fontSize: '1.4rem', fontWeight: 700, ...mono }}>
+                {simResult ? simResult.baseline_critical_patients : patients}
+              </div>
+              <div style={{ color: C.muted, fontSize: '0.7rem', marginTop: 8, ...mono }}>Health Score</div>
+              <div style={{ color: C.crit, fontSize: '1.1rem', fontWeight: 700, ...mono }}>
+                {simResult ? simResult.baseline_health_score : overview.health_score}
+              </div>
+              <div style={{ color: C.muted, fontSize: '0.7rem', marginTop: 8, ...mono }}>Primary Driver</div>
+              <div style={{ color: C.warn, fontSize: '0.8rem', fontWeight: 700, ...mono }}>{driver}</div>
+            </div>
 
-IF WE ACT  (${simVariable} ${simChange > 0 ? '+' : ''}${simChange}%)
-  Critical Patients : ${simResult.projected_critical_patients}
-  Critical Risks    : ${simResult.projected_critical_risks}
-  Health Score      : ${simResult.projected_health_score}
+            {/* SCENARIO RESULT */}
+            <div style={{ background: C.bg, border: `1px solid ${simFailed ? C.crit : simResult ? C.pos : C.border}`, padding: 10 }}>
+              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: 2, marginBottom: 8, ...mono }}>
+                IF WE ACT{simResult ? ` (${simVar} ${simPct > 0 ? '+' : ''}${simPct}%)` : ''}
+              </div>
+              {simFailed && (
+                <div style={{ color: C.crit, fontSize: '0.75rem', ...mono }}>SIMULATION DATA NOT AVAILABLE</div>
+              )}
+              {!simFailed && !simResult && (
+                <div style={{ color: C.dim, fontSize: '0.75rem', ...mono }}>
+                  Select driver and percentage, then press SIMULATE.
+                </div>
+              )}
+              {simResult && !simFailed && (
+                <>
+                  <div style={{ color: C.muted, fontSize: '0.7rem', ...mono }}>Critical Patients</div>
+                  <div style={{ color: C.pos, fontSize: '1.4rem', fontWeight: 700, ...mono }}>
+                    {simResult.projected_critical_patients}
+                  </div>
+                  <div style={{ color: C.muted, fontSize: '0.7rem', marginTop: 8, ...mono }}>Health Score</div>
+                  <div style={{ color: C.pos, fontSize: '1.1rem', fontWeight: 700, ...mono }}>
+                    {simResult.projected_health_score}
+                  </div>
+                  <div style={{ color: C.muted, fontSize: '0.7rem', marginTop: 8, ...mono }}>Critical Risks</div>
+                  <div style={{ color: C.pos, fontSize: '0.9rem', fontWeight: 700, ...mono }}>
+                    {simResult.projected_critical_risks}
+                  </div>
+                </>
+              )}
+            </div>
 
-EXPECTED IMPROVEMENT
-  Patients Delta    : ${delta(simResult.critical_patients_delta)}
-  Risks Delta       : ${delta(simResult.critical_risks_delta)}
-  Health Delta      : ${delta(simResult.health_score_delta)}`}
-            </pre>
-          )}
+            {/* EXPECTED IMPROVEMENT */}
+            <div style={{ background: C.bg, border: `1px solid ${C.border}`, padding: 10 }}>
+              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: 2, marginBottom: 8, ...mono }}>EXPECTED IMPROVEMENT</div>
+              {simResult && !simFailed ? (
+                <>
+                  <div style={{ color: C.muted, fontSize: '0.7rem', ...mono }}>Patients Delta</div>
+                  <div style={{ color: simResult.critical_patients_delta < 0 ? C.pos : C.crit, fontSize: '1.4rem', fontWeight: 700, ...mono }}>
+                    {delta(simResult.critical_patients_delta)}
+                  </div>
+                  <div style={{ color: C.muted, fontSize: '0.7rem', marginTop: 8, ...mono }}>Health Delta</div>
+                  <div style={{ color: simResult.health_score_delta > 0 ? C.pos : C.crit, fontSize: '1.1rem', fontWeight: 700, ...mono }}>
+                    {delta(simResult.health_score_delta)}
+                  </div>
+                  <div style={{ color: C.muted, fontSize: '0.7rem', marginTop: 8, ...mono }}>Risks Delta</div>
+                  <div style={{ color: simResult.critical_risks_delta < 0 ? C.pos : C.crit, fontSize: '0.9rem', fontWeight: 700, ...mono }}>
+                    {delta(simResult.critical_risks_delta)}
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: C.dim, fontSize: '0.75rem', ...mono }}>Run simulation to see projected deltas.</div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* ── RIGHT: ACTION ENGINE ───────────────────────────────────────── */}
-        <div style={{ background: '#0B1118', border: '1px solid #1E293B', overflow: 'auto', padding: 8 }}>
-          <div style={{ color: '#475569', fontSize: '0.7rem', marginBottom: 8, letterSpacing: 2 }}>ACTION ENGINE — TOP 3</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+        {/* ── RIGHT: WHAT SHOULD WE DO? ─────────────────────────────── */}
+        <div style={panel}>
+          {sectionLabel('WHAT SHOULD WE DO?  —  ACTION ENGINE')}
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 10 }}>
             <thead>
-              <tr style={{ background: '#05070A' }}>
-                {['Rank', 'Action', 'Patients', 'Score', 'Conf'].map(h => (
-                  <th key={h} style={{ border: '1px solid #1E293B', padding: '3px 5px', textAlign: 'left', color: '#475569', fontWeight: 600 }}>{h}</th>
-                ))}
+              <tr>
+                <TH>#</TH><TH>Action</TH><TH>Patients</TH><TH>Conf</TH>
               </tr>
             </thead>
             <tbody>
               {top3.map((a, i) => (
-                <tr key={a.id} style={{ borderBottom: '1px solid #1E293B' }}>
-                  <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#94A3B8' }}>{i + 1}</td>
-                  <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#60A5FA', fontWeight: 700 }}>{a.title}</td>
-                  <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#E5E7EB' }}>{a.population_affected}</td>
-                  <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#A78BFA' }}>{a.priority_score.toFixed(1)}</td>
-                  <td style={{ border: '1px solid #1E293B', padding: '3px 5px', color: '#22C55E' }}>{Math.round(a.confidence * 100)}%</td>
+                <tr key={a.id} style={{ background: i % 2 === 0 ? C.bg : 'transparent' }}>
+                  <TD color={C.muted}>{i + 1}</TD>
+                  <TD color={C.blue}>{a.title}</TD>
+                  <TD color={C.text}>{a.population_affected}</TD>
+                  <TD color={C.pos}>{Math.round(a.confidence * 100)}%</TD>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* Action descriptions */}
-          <div style={{ marginTop: 12 }}>
-            {top3.map((a, i) => (
-              <div key={a.id} style={{ marginBottom: 8, padding: '6px 8px', background: '#05070A', border: '1px solid #1E293B' }}>
-                <div style={{ color: '#60A5FA', fontSize: '0.72rem', fontWeight: 700, marginBottom: 2 }}>#{i + 1} {a.title}</div>
-                <div style={{ color: '#94A3B8', fontSize: '0.7rem' }}>{a.description}</div>
+          {top3.map((a, i) => (
+            <div key={a.id} style={{ padding: '6px 8px', background: C.bg, border: `1px solid ${C.border}`, marginBottom: 6 }}>
+              <div style={{ color: C.blue, fontSize: '0.72rem', fontWeight: 700, marginBottom: 2, ...mono }}>
+                #{i + 1} {a.title}
               </div>
-            ))}
-          </div>
+              <div style={{ color: C.muted, fontSize: '0.68rem', marginBottom: 4, ...mono }}>{a.description}</div>
+              <div style={{ display: 'flex', gap: 10, fontSize: '0.68rem', ...mono }}>
+                <span style={{ color: C.dim }}>Score: <span style={{ color: C.purple }}>{a.priority_score.toFixed(1)}</span></span>
+                <span style={{ color: C.dim }}>Conf: <span style={{ color: C.pos }}>{Math.round(a.confidence * 100)}%</span></span>
+                <span style={{ color: C.dim }}>Pts: <span style={{ color: C.text }}>{a.population_affected}</span></span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ── AUDIT INSPECTOR (collapsible, inline) ────────────────────────── */}
-      <div style={{ margin: '8px 8px 0', fontFamily: 'IBM Plex Mono, monospace' }}>
+      {/* ══════════════════════════════════════════════════════════════
+          ROW 3 — EXECUTIVE OUTCOME
+      ══════════════════════════════════════════════════════════════ */}
+      <div style={{
+        margin: '6px 6px 0',
+        background: C.panel,
+        border: `1px solid ${C.border}`,
+        padding: '14px 20px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: 16,
+        ...mono,
+      }}>
+        <div>
+          <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: 3, marginBottom: 4 }}>BEST ACTION</div>
+          <div style={{ color: C.blue, fontSize: '1.05rem', fontWeight: 700 }}>{bestAction.toUpperCase()}</div>
+          <div style={{ color: C.muted, fontSize: '0.68rem', marginTop: 3 }}>{bestActionDesc}</div>
+        </div>
+        <div>
+          <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: 3, marginBottom: 4 }}>EXPECTED RESULT</div>
+          <div style={{ color: C.pos, fontSize: '1.4rem', fontWeight: 700 }}>
+            {simResult
+              ? `${simResult.baseline_critical_patients} → ${simResult.projected_critical_patients}`
+              : `${patients} → —`}
+          </div>
+        </div>
+        <div>
+          <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: 3, marginBottom: 4 }}>PATIENTS IMPROVED</div>
+          <div style={{ color: C.pos, fontSize: '1.4rem', fontWeight: 700 }}>
+            {simResult
+              ? Math.abs(simResult.critical_patients_delta)
+              : bestActionPts}
+          </div>
+        </div>
+        <div>
+          <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: 3, marginBottom: 4 }}>CONFIDENCE</div>
+          <div style={{ color: C.pos, fontSize: '1.4rem', fontWeight: 700 }}>{bestActionConf}</div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          ROW 4 — AUDIT EVIDENCE (collapsible)
+      ══════════════════════════════════════════════════════════════ */}
+      <div style={{ margin: '6px 6px 0', ...mono }}>
         <button
           onClick={() => setAuditOpen(o => !o)}
-          style={{ background: '#0B1118', border: '1px solid #1E293B', color: '#475569', padding: '4px 12px', fontSize: '0.75rem', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+          style={{
+            width: '100%', textAlign: 'left',
+            background: C.panel, border: `1px solid ${C.border}`,
+            color: C.dim, padding: '5px 12px',
+            fontSize: '0.72rem', cursor: 'pointer',
+          }}
         >
-          {auditOpen ? '▲' : '▼'} AUDIT INSPECTOR
+          {auditOpen ? '▲' : '▼'} AUDIT EVIDENCE
         </button>
+
         {auditOpen && (
-          <div style={{ background: '#0B1118', border: '1px solid #1E293B', borderTop: 'none', padding: 12, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, fontSize: '0.72rem' }}>
+          <div style={{
+            background: C.panel, border: `1px solid ${C.border}`, borderTop: 'none',
+            padding: 12, display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr', gap: 12, fontSize: '0.7rem',
+          }}>
             {/* Health Score Audit */}
             <div>
-              <div style={{ color: '#475569', letterSpacing: 2, marginBottom: 6 }}>HEALTH SCORE AUDIT</div>
+              <div style={{ color: C.dim, letterSpacing: 2, marginBottom: 6 }}>HEALTH SCORE AUDIT</div>
               {healthAudit ? (
-                <pre style={{ color: '#E5E7EB', margin: 0, lineHeight: 1.6 }}>
+                <pre style={{ color: C.text, margin: 0, lineHeight: 1.7, fontSize: '0.68rem', whiteSpace: 'pre-wrap' }}>
 {`Score   : ${healthAudit.health_score}
 Baseline: ${healthAudit.baseline}
 
 PENALTIES
 ${healthAudit.penalties.map(p =>
-  `${p.rule}\n  Patients: ${p.affected_patients}\n  Penalty : ${p.penalty}`
+  `${p.rule}\n  Patients : ${p.affected_patients}\n  Weight   : ${p.weight}\n  Penalty  : ${p.penalty}`
 ).join('\n')}`}
                 </pre>
-              ) : <span style={{ color: '#475569' }}>No data</span>}
+              ) : <span style={{ color: C.dim }}>No data</span>}
             </div>
 
-            {/* Critical Population Audit */}
+            {/* Critical Population */}
             <div>
-              <div style={{ color: '#475569', letterSpacing: 2, marginBottom: 6 }}>CRITICAL POPULATION</div>
-              {criticalPop ? (
-                <pre style={{ color: '#E5E7EB', margin: 0, lineHeight: 1.6 }}>
-{`Critical : ${criticalPop.critical_patients}
-Total    : ${criticalPop.total_patients}
-Rate     : ${((criticalPop.critical_patients / criticalPop.total_patients) * 100).toFixed(1)}%
+              <div style={{ color: C.dim, letterSpacing: 2, marginBottom: 6 }}>CRITICAL POPULATION AUDIT</div>
+              {critPop ? (
+                <pre style={{ color: C.text, margin: 0, lineHeight: 1.7, fontSize: '0.68rem', whiteSpace: 'pre-wrap' }}>
+{`Critical : ${critPop.critical_patients}
+Total    : ${critPop.total_patients}
+Rate     : ${((critPop.critical_patients / critPop.total_patients) * 100).toFixed(1)}%
 
 TOP TRIGGERS
-${criticalPop.top_trigger_rules.join('\n')}`}
+${critPop.top_trigger_rules.join('\n')}`}
                 </pre>
-              ) : <span style={{ color: '#475569' }}>No data</span>}
+              ) : <span style={{ color: C.dim }}>No data</span>}
             </div>
 
-            {/* Rule Consistency Audit */}
+            {/* Rule Consistency */}
             <div>
-              <div style={{ color: '#475569', letterSpacing: 2, marginBottom: 6 }}>RULE CONSISTENCY</div>
-              {ruleConsistency.length > 0 ? (
-                <pre style={{ color: '#E5E7EB', margin: 0, lineHeight: 1.6, fontSize: '0.68rem' }}>
-{ruleConsistency.map(r =>
+              <div style={{ color: C.dim, letterSpacing: 2, marginBottom: 6 }}>RULE CONSISTENCY AUDIT</div>
+              {rules.length > 0 ? (
+                <pre style={{ color: C.text, margin: 0, lineHeight: 1.7, fontSize: '0.66rem', whiteSpace: 'pre-wrap' }}>
+{rules.map(r =>
   `${r.rule}\n  Support: ${r.support}  Conf: ${Math.round(r.confidence * 100)}%  Lift: ${r.lift}  Pts: ${r.patient_count}`
 ).join('\n')}
                 </pre>
-              ) : <span style={{ color: '#475569' }}>No data</span>}
+              ) : <span style={{ color: C.dim }}>No data</span>}
             </div>
           </div>
         )}
       </div>
+
     </PageContainer>
   );
 };
