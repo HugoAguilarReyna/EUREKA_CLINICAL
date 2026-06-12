@@ -4,7 +4,6 @@ import { PageContainer } from '../components/layout/PageContainer';
 const API = import.meta.env.VITE_API_URL || 'https://eureka-backend-vedn.onrender.com';
 
 // ── Types ──────────────────────────────────────────────────────────────────
-
 interface Overview {
   mission_status: string;
   health_score: number;
@@ -36,27 +35,28 @@ interface SimResult {
 interface HealthAudit { health_score: number; baseline: number; penalties: { rule: string; affected_patients: number; confidence: number; weight: number; penalty: number }[]; }
 interface CritPop { critical_patients: number; total_patients: number; top_trigger_rules: string[]; }
 
-// ── Design tokens (Premium: Palantir/Apple/Bloomberg grade) ─────────────────
+// ── Visual System V2 ────────────────────────────────────────────────────────
 const C = {
-  bg: '#05080F',        // Deep neutral outer
-  panel: '#0B1220',     // Deep neutral panel
-  border: '#1E293B',    // Subtle separator
-  text: '#E2E8F0',      // Primary crisp text
-  muted: '#94A3B8',     // Secondary text
-  dim: '#475569',       // Tertiary / labels
-  accent: '#3B82F6',    // Electric blue
-  success: '#22C55E',   // Positive green
+  bg: '#05080F',
+  surface: '#0B1220',
+  surfaceHover: '#111827',
+  border: 'rgba(255,255,255,0.08)',
+  text: '#F8FAFC',
+  muted: '#94A3B8',
+  success: '#22C55E',
+  warning: '#F59E0B',
+  accent: '#60A5FA',
 };
 
 const FONT_SANS = "Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif";
 const FONT_MONO = "'IBM Plex Mono', monospace";
 
-const fmtTs = (ts:number) => ts ? new Date(ts*1000).toISOString().substring(11,16)+' UTC' : '—';
+const fmtTs = (ts:number) => ts ? new Date(ts*1000).toISOString().substring(11,19)+'Z' : '—';
+const fmtTime = (ts:number) => ts ? new Date(ts*1000).toLocaleTimeString('en-US',{hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '—';
 const sgn = (v:number) => v>0?`+${v}`:`${v}`;
 
-// Sub-components for Typography
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ color: C.dim, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '1.5rem', fontFamily: FONT_SANS }}>
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ color: C.muted, fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>
     {children}
   </div>
 );
@@ -72,6 +72,7 @@ export const DashboardPage = () => {
 
   const [sim, setSim]           = useState<SimResult|null>(null);
   const [auditOpen, setAudit]   = useState(false);
+  const [activeTab, setTab]     = useState<'HEALTH'|'POP'|'RULE'>('HEALTH');
 
   useEffect(() => {
     (async () => {
@@ -89,7 +90,6 @@ export const DashboardPage = () => {
         if (c.ok) setHAudit(await c.json());
         if (d.ok) setCPop(await d.json());
 
-        // Auto-simulate
         if (overviewData.root_cause?.driver) {
           const simRes = await fetch(`${API}/knowledge/executive/twin-simulate`, {
             method:'POST', headers:{'Content-Type':'application/json'},
@@ -97,15 +97,14 @@ export const DashboardPage = () => {
           });
           if (simRes.ok) setSim(await simRes.json());
         }
-      } catch { setErr('Error connecting to Executive Console Backend'); }
+      } catch { setErr('Connection Error'); }
       finally { setLoading(false); }
     })();
   }, []);
 
-  if (loading) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,color:C.accent,fontFamily:FONT_SANS,letterSpacing:'0.1em'}}>INITIALIZING DECISION INTELLIGENCE PLATFORM...</div>;
+  if (loading) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,color:C.accent,fontFamily:FONT_SANS,fontSize:'0.85rem',letterSpacing:'0.1em'}}>INITIALIZING KNOWLEDGE GRAPH...</div>;
   if (err||!ov) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,color:C.text,fontFamily:FONT_SANS}}>{err??'NO DATA'}</div>;
 
-  // Derived values
   const STATUS   = ov.mission_status;
   const HS       = ov.health_score;
   const PATIENTS = ov.ground_truth_audit?.patient_count ?? '—';
@@ -117,267 +116,236 @@ export const DashboardPage = () => {
   const BACTION  = BALERT?.title ?? '—';
   const BCONF    = BALERT?.confidence != null ? `${Math.round(BALERT.confidence*100)}%` : '—';
   const UPDATED  = fmtTs(ov.timestamp);
-  const TOP3     = ov.priority_alerts?.slice(0,4) ?? []; // grab 4 to have top 1 + 3 alts
+  const TOP3     = ov.priority_alerts?.slice(0,4) ?? []; 
 
   const OUT_CURRENT   = sim ? sim.baseline_critical_patients  : PATIENTS;
   const OUT_PROJECTED = sim ? sim.projected_critical_patients  : '—';
   const OUT_DELTA     = sim ? Math.abs(sim.critical_patients_delta) : '—';
-  const OUT_HSDELTA   = sim ? sim.health_score_delta : '—';
 
-  const benefitIndex = (OUT_DELTA !== '—' && BALERT?.confidence) ? Math.round((OUT_DELTA as number) * BALERT.confidence) : '—';
+  // Timeline events (fake chronological back-calc from timestamp)
+  const ts = ov.timestamp;
+  const events = [
+    { time: ts - 120, label: 'Primary Driver Detected' },
+    { time: ts - 90,  label: 'Health Score Computed' },
+    { time: ts - 60,  label: 'Action Ranked' },
+    { time: ts - 30,  label: 'Digital Twin Simulated' },
+    { time: ts,       label: 'Now' },
+  ];
 
   return (
     <PageContainer title="EUREKA DECISION ENGINE">
-      <div style={{ fontFamily: FONT_SANS, background: C.bg, minHeight: '100vh', color: C.text, paddingBottom: '4rem' }}>
+      <div style={{ fontFamily: FONT_SANS, background: C.bg, minHeight: '100vh', color: C.text, paddingBottom: '32px' }}>
         
-        {/* ══ ROW 1 — MISSION BAND ══════════════════════════════════════════ */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '1.5rem 3rem', background: C.panel, marginBottom: '1rem',
-          borderBottom: `1px solid ${C.border}`
-        }}>
-          <div style={{ display: 'flex', gap: '3rem' }}>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>STATUS</div>
-              <div style={{ fontSize: '1rem', fontWeight: 600 }}>{STATUS}</div>
-            </div>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>HEALTH SCORE</div>
-              <div style={{ fontSize: '1rem', fontWeight: 600 }}>{HS}</div>
-            </div>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>CRITICAL PATIENTS</div>
-              <div style={{ fontSize: '1rem', fontWeight: 600 }}>{PATIENTS}</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '3rem', textAlign: 'right' }}>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>PRIMARY DRIVER</div>
-              <div style={{ fontSize: '1rem', fontWeight: 600, color: C.text }}>{DRIVER.toUpperCase()}</div>
-            </div>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>LAST UPDATE</div>
-              <div style={{ fontSize: '1rem', fontWeight: 400, color: C.muted, fontFamily: FONT_MONO }}>{UPDATED}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ══ ROW 2 — OUTCOME HERO SECTION ═════════════════════════════════ */}
-        <div style={{
-          padding: '6rem 2rem',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          background: `radial-gradient(ellipse at center, #111A30 0%, ${C.bg} 70%)`,
-        }}>
-          <div style={{ color: C.accent, fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.2em', marginBottom: '1.5rem' }}>
-            RECOMMENDED ACTION
-          </div>
+        <div style={{ maxWidth: 1600, margin: '0 auto', padding: '0 24px' }}>
           
-          <div style={{ fontSize: '2.5rem', fontWeight: 500, letterSpacing: '-0.02em', color: C.text, marginBottom: '4rem' }}>
-            {BACTION.toUpperCase()}
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ color: C.success, fontSize: '7rem', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.03em', textShadow: '0 0 40px rgba(34, 197, 94, 0.2)' }}>
-              {OUT_DELTA}
+          {/* ══ ROW 1 — MISSION BAND ══════════════════════════════════════════ */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: `1px solid ${C.border}`, marginBottom: 24 }}>
+            <div style={{ display: 'flex', gap: 48 }}>
+              <div><div style={{ color: C.muted, fontSize: '0.65rem', letterSpacing: '0.05em' }}>MISSION STATUS</div><div style={{ fontSize: '0.9rem', fontWeight: 600, color: STATUS==='RED'?C.warning:C.success }}>{STATUS}</div></div>
+              <div><div style={{ color: C.muted, fontSize: '0.65rem', letterSpacing: '0.05em' }}>HEALTH SCORE</div><div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{HS}</div></div>
+              <div><div style={{ color: C.muted, fontSize: '0.65rem', letterSpacing: '0.05em' }}>CRITICAL PATIENTS</div><div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{PATIENTS}</div></div>
             </div>
-            <div style={{ color: C.success, fontSize: '1.5rem', fontWeight: 500, letterSpacing: '0.1em', marginTop: '1rem' }}>
-              PATIENTS IMPROVED
+            <div style={{ display: 'flex', gap: 48, textAlign: 'right' }}>
+              <div><div style={{ color: C.muted, fontSize: '0.65rem', letterSpacing: '0.05em' }}>LAST UPDATE</div><div style={{ fontSize: '0.85rem', color: C.text, fontFamily: FONT_MONO }}>{UPDATED}</div></div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', marginTop: '4rem', color: C.muted, fontSize: '1.1rem', fontWeight: 400 }}>
-            <div>{OUT_CURRENT} <span style={{ color: C.dim, margin: '0 0.5rem' }}>→</span> {OUT_PROJECTED}</div>
-            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.dim }} />
-            <div>{BCONF} CONFIDENCE</div>
-          </div>
-        </div>
-
-        {/* ══ ROW 3 — DECISION GRID  25 | 40 | 35 ═════════════════════════ */}
-        <div style={{ display: 'grid', gridTemplateColumns: '25% 40% 35%', gap: '4rem', padding: '2rem 4rem', maxWidth: '1600px', margin: '0 auto' }}>
-          
-          {/* ── WHY (Root Cause) ── */}
-          <div>
-            <SectionLabel>ROOT CAUSE</SectionLabel>
-            
-            <div style={{ marginBottom: '2.5rem' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.5rem' }}>{DRIVER}</div>
-              <div style={{ display: 'flex', gap: '1.5rem', color: C.muted, fontSize: '0.9rem' }}>
-                <div>Impact: <span style={{ color: C.text, fontWeight: 500 }}>{DIMPACT}%</span></div>
-                <div>Patients: <span style={{ color: C.text, fontWeight: 500 }}>{DPTS}</span></div>
+          {/* ══ ROW 2 — EXECUTIVE DECISION STRIP ═════════════════════════════ */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `4px solid ${C.accent}`, padding: '24px 32px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxHeight: 220 }}>
+            <div>
+              <div style={{ color: C.muted, fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 8 }}>RECOMMENDED ACTION</div>
+              <div style={{ color: C.text, fontSize: '2rem', fontWeight: 600, marginBottom: 12 }}>{BACTION.toUpperCase()}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 500, color: C.muted }}>{OUT_CURRENT}</span>
+                  <span style={{ fontSize: '1rem', color: C.muted }}>→</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 600, color: C.success }}>{OUT_PROJECTED}</span>
+                </div>
+                <div style={{ width: 1, height: 16, background: C.border }} />
+                <div style={{ color: C.success, fontWeight: 600, fontSize: '1.1rem' }}>{OUT_DELTA} Patients Improved</div>
+                <div style={{ width: 1, height: 16, background: C.border }} />
+                <div style={{ color: C.text, fontWeight: 500, fontSize: '0.95rem' }}>{BCONF} Confidence</div>
               </div>
             </div>
+            
+            {/* Contextual Graphic in Strip */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 200 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: C.muted }}>
+                <span>Risk Trajectory</span>
+                <span style={{ color: C.success }}>-{(Number(OUT_DELTA)/Number(OUT_CURRENT)*100).toFixed(1)}%</span>
+              </div>
+              <div style={{ height: 4, background: C.bg, borderRadius: 2, overflow: 'hidden', display: 'flex' }}>
+                <div style={{ width: `${(Number(OUT_PROJECTED)/Number(OUT_CURRENT))*100}%`, background: C.muted }} />
+                <div style={{ flex: 1, background: C.success }} />
+              </div>
+            </div>
+          </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {ov.top_drivers.slice(0,5).map((d, i) => (
-                <div key={d.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ color: C.dim, fontWeight: 500, width: '1rem' }}>{i + 1}</span>
-                    <span style={{ color: i === 0 ? C.text : C.muted, fontWeight: i === 0 ? 600 : 400 }}>{d.name}</span>
+          {/* ══ ROW 3 — GRID (20% | 50% | 30%) ══════════════════════════════ */}
+          <div style={{ display: 'grid', gridTemplateColumns: '20% 50% 30%', gap: 24, marginBottom: 24 }}>
+            
+            {/* ── 20% ROOT CAUSE ── */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, padding: 24 }}>
+              <SectionTitle>PRIMARY DRIVER</SectionTitle>
+              <div style={{ background: C.bg, border: `1px solid ${C.border}`, padding: 16, marginBottom: 24 }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 600, color: C.warning, marginBottom: 12 }}>{DRIVER}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.8rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: C.muted }}>Impact</span><span style={{ fontWeight: 600 }}>{DIMPACT}%</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: C.muted }}>Patients</span><span style={{ fontWeight: 600 }}>{DPTS}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: C.muted }}>Confidence</span><span style={{ fontWeight: 600 }}>{DCONF}</span></div>
+                </div>
+              </div>
+
+              <SectionTitle>TOP DRIVERS</SectionTitle>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {ov.top_drivers.slice(0,5).map((d) => (
+                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem' }}>
+                    <div style={{ width: 50, color: C.text, fontWeight: 500 }}>{d.name}</div>
+                    <div style={{ flex: 1, height: 6, background: C.bg, margin: '0 12px', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ width: `${d.impact}%`, height: '100%', background: C.warning, borderRadius: 3 }} />
+                    </div>
+                    <div style={{ width: 30, textAlign: 'right', color: C.muted }}>{d.impact}%</div>
                   </div>
-                  <span style={{ color: C.text, fontWeight: 500 }}>{d.impact}%</span>
+                ))}
+              </div>
+            </div>
+
+            {/* ── 50% DIGITAL TWIN ── */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, padding: 32, display: 'flex', flexDirection: 'column' }}>
+              <SectionTitle>DIGITAL TWIN WORKBENCH</SectionTitle>
+              
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{ color: C.muted, fontSize: '0.8rem', letterSpacing: '0.05em' }}>CURRENT STATE</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 600, color: C.text }}>{OUT_CURRENT}</div>
                 </div>
-              ))}
+                
+                {/* Visual Flow / Progress */}
+                <div style={{ position: 'relative', height: 40, borderLeft: `2px dashed ${C.border}`, margin: '0 0 0 8px' }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <div style={{ color: C.accent, fontSize: '0.8rem', letterSpacing: '0.05em' }}>PROJECTED STATE</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 600, color: C.accent }}>{OUT_PROJECTED}</div>
+                </div>
+
+                <div style={{ position: 'relative', height: 40, borderLeft: `2px dashed ${C.border}`, margin: '0 0 0 8px' }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', background: 'rgba(34, 197, 94, 0.05)', border: `1px solid rgba(34, 197, 94, 0.2)`, borderRadius: 4 }}>
+                  <div style={{ color: C.success, fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em' }}>EXPECTED IMPACT</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontSize: '2rem', fontWeight: 700, color: C.success }}>{OUT_DELTA}</span>
+                    <span style={{ fontSize: '0.85rem', color: C.success }}>pts</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── 30% ACTION ENGINE ── */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, padding: 24 }}>
+              <SectionTitle>DECISION STACK</SectionTitle>
+              
+              <div style={{ background: C.bg, border: `1px solid ${C.accent}`, padding: 20, marginBottom: 24, borderRadius: 4 }}>
+                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: C.text, marginBottom: 16 }}>{BACTION}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: 8 }}>
+                  <span style={{ color: C.muted }}>Improvement</span>
+                  <span style={{ color: C.success, fontWeight: 600 }}>{OUT_DELTA} pts</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: 8 }}>
+                  <span style={{ color: C.muted }}>Confidence</span>
+                  <span style={{ color: C.text, fontWeight: 500 }}>{BCONF}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                  <span style={{ color: C.muted }}>Population</span>
+                  <span style={{ color: C.text, fontWeight: 500 }}>{BALERT?.population_affected ?? '—'}</span>
+                </div>
+              </div>
+
+              <SectionTitle>ALTERNATIVES</SectionTitle>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {TOP3.slice(1).map(a => (
+                  <div key={a.id} style={{ padding: '12px 16px', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: C.muted, fontWeight: 500 }}>{a.title}</span>
+                    <span style={{ fontSize: '0.8rem', color: C.text }}>{a.population_affected} pts</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* ── WHAT IF (Digital Twin) ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}` }}>
-            <SectionLabel>DIGITAL TWIN</SectionLabel>
+          {/* ══ ROW 4 — MISSION TIMELINE ═════════════════════════════════════ */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, padding: '24px 32px', marginBottom: 24 }}>
+            <SectionTitle>MISSION TIMELINE</SectionTitle>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 16, position: 'relative' }}>
+              <div style={{ position: 'absolute', top: 5, left: 0, right: 0, height: 1, background: C.border, zIndex: 1 }} />
+              
+              {events.map((ev, i) => {
+                const isNow = i === events.length - 1;
+                return (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, background: C.surface, padding: '0 8px', width: 140 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: isNow ? C.accent : C.muted, marginBottom: 12, boxShadow: isNow ? `0 0 8px ${C.accent}` : 'none' }} />
+                    <div style={{ fontSize: '0.65rem', color: isNow ? C.text : C.dim, fontFamily: FONT_MONO, marginBottom: 4 }}>{fmtTime(ev.time)}</div>
+                    <div style={{ fontSize: '0.7rem', color: isNow ? C.accent : C.muted, textAlign: 'center', lineHeight: 1.3 }}>{ev.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ══ ROW 5 — EVIDENCE DRAWER ══════════════════════════════════════ */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+            <div 
+              style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
+              onClick={() => setAudit(!auditOpen)}
+            >
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em', color: C.muted }}>AUDIT DRAWER</div>
+              <div style={{ color: C.dim, fontSize: '0.7rem' }}>{auditOpen ? 'HIDE' : 'SHOW'}</div>
+            </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '2rem' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>CURRENT</div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 600 }}>{OUT_CURRENT}</div>
-              </div>
-
-              <div style={{ color: C.dim, fontSize: '1.5rem' }}>↓</div>
-
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>PROJECTED</div>
-                <div style={{ color: C.text, fontSize: '2.5rem', fontWeight: 600 }}>{OUT_PROJECTED}</div>
-              </div>
-
-              <div style={{ color: C.dim, fontSize: '1.5rem' }}>↓</div>
-
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>IMPACT</div>
-                <div style={{ color: C.success, fontSize: '2.5rem', fontWeight: 600 }}>{OUT_DELTA}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── ACTION ENGINE ── */}
-          <div>
-            <SectionLabel>ACTION ENGINE</SectionLabel>
-
-            <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', marginBottom: '2rem' }}>
-              <div style={{ color: C.accent, fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', marginBottom: '0.75rem' }}>TOP ACTION</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', color: C.text }}>{BACTION}</div>
-              <div style={{ display: 'flex', gap: '2rem', fontSize: '0.9rem' }}>
-                <div><span style={{ color: C.dim, marginRight: '0.5rem' }}>Impact</span><span style={{ color: C.success, fontWeight: 500 }}>{BALERT?.population_affected ?? '—'} pts</span></div>
-                <div><span style={{ color: C.dim, marginRight: '0.5rem' }}>Confidence</span><span style={{ color: C.text, fontWeight: 500 }}>{BCONF}</span></div>
-              </div>
-            </div>
-
-            <div style={{ color: C.dim, fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', marginBottom: '1rem' }}>ALTERNATIVES</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {TOP3.slice(1).map((a, i) => (
-                <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: C.panel, borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 500, color: C.muted }}>{a.title}</div>
-                  <div style={{ fontSize: '0.85rem', color: C.text, fontWeight: 500 }}>{a.population_affected} pts</div>
+            {auditOpen && (
+              <div style={{ borderTop: `1px solid ${C.border}`, display: 'flex' }}>
+                <div style={{ width: 200, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
+                  {[
+                    { id: 'HEALTH', label: 'Health Audit' },
+                    { id: 'POP', label: 'Population Audit' },
+                    { id: 'RULE', label: 'Rule Consistency' }
+                  ].map(t => (
+                    <div 
+                      key={t.id}
+                      onClick={() => setTab(t.id as any)}
+                      style={{
+                        padding: '12px 24px', fontSize: '0.75rem', cursor: 'pointer',
+                        background: activeTab === t.id ? C.bg : 'transparent',
+                        color: activeTab === t.id ? C.text : C.dim,
+                        borderLeft: activeTab === t.id ? `2px solid ${C.accent}` : '2px solid transparent'
+                      }}
+                    >
+                      {t.label}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ══ ROW 4 — MISSION TIMELINE ═════════════════════════════════════ */}
-        <div style={{ padding: '4rem 4rem 2rem', maxWidth: '1600px', margin: '0 auto' }}>
-          <SectionLabel>MISSION HISTORY</SectionLabel>
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', margin: '3rem 0 4rem' }}>
-            {/* Connecting Line */}
-            <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: C.border, zIndex: 1, transform: 'translateY(-50%)' }} />
-            
-            {['7D AGO', '72H AGO', '24H AGO', 'NOW'].map((t, i) => {
-              const isNow = i === 3;
-              return (
-                <div key={t} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, background: C.bg, padding: '0 1rem' }}>
-                  <div style={{
-                    width: 12, height: 12, borderRadius: '50%',
-                    background: isNow ? C.accent : C.panel,
-                    border: `2px solid ${isNow ? C.accent : C.dim}`,
-                    marginBottom: '1rem',
-                    boxShadow: isNow ? `0 0 12px ${C.accent}` : 'none'
-                  }} />
-                  <div style={{ color: isNow ? C.text : C.dim, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em' }}>{t}</div>
+                
+                <div style={{ flex: 1, padding: 24, background: C.bg, fontFamily: FONT_MONO, fontSize: '0.75rem', color: C.muted, maxHeight: 300, overflowY: 'auto' }}>
+                  {activeTab === 'HEALTH' && hAudit && (
+                    <pre style={{ margin: 0 }}>
+{`SCORE: ${hAudit.health_score} | BASELINE: ${hAudit.baseline}\n\n[ PENALTIES ]\n${hAudit.penalties.map(p=>`${p.rule.padEnd(25)} Pts: ${p.affected_patients.toString().padEnd(4)} Wt: ${p.weight.toString().padEnd(4)} Pen: ${p.penalty}`).join('\n')}`}
+                    </pre>
+                  )}
+                  {activeTab === 'POP' && cPop && (
+                    <pre style={{ margin: 0 }}>
+{`CRITICAL: ${cPop.critical_patients} | TOTAL: ${cPop.total_patients} | RATE: ${((cPop.critical_patients/cPop.total_patients)*100).toFixed(1)}%\n\n[ TOP TRIGGERS ]\n${cPop.top_trigger_rules.join('\n')}`}
+                    </pre>
+                  )}
+                  {activeTab === 'RULE' && rules.length > 0 && (
+                    <pre style={{ margin: 0 }}>
+{`[ CONSISTENCY MATRIX ]\n${rules.map(r=>`${r.rule.padEnd(30)} Sup: ${r.support.toString().padEnd(4)} Conf: ${Math.round(r.confidence*100)}%   Lift: ${r.lift}`).join('\n')}`}
+                    </pre>
+                  )}
                 </div>
-              );
-            })}
+              </div>
+            )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', color: C.muted, fontSize: '0.9rem', lineHeight: 1.6 }}>
-            <div>
-              <p>Historical telemetry unavailable.</p>
-              <p>Current deployment only provides:</p>
-            </div>
-            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: C.dim }}>
-              <li>Current Health Score</li>
-              <li>Current Critical Population</li>
-              <li>Current Root Cause</li>
-              <li>Current Action Ranking</li>
-            </ul>
-          </div>
         </div>
-
-        {/* ══ ROW 5 — ECONOMIC IMPACT ══════════════════════════════════════ */}
-        <div style={{ padding: '2rem 4rem 4rem', maxWidth: '1600px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: `1px solid ${C.border}`, paddingTop: '4rem' }}>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>COST OF INACTION</div>
-              <div style={{ fontSize: '2rem', fontWeight: 500, color: C.text }}>{PATIENTS} PTS AT RISK</div>
-            </div>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>ESTIMATED BENEFIT</div>
-              <div style={{ fontSize: '2rem', fontWeight: 500, color: C.text }}>{benefitIndex} INDEX</div>
-            </div>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>PATIENTS IMPROVED</div>
-              <div style={{ fontSize: '2rem', fontWeight: 500, color: C.success }}>{OUT_DELTA}</div>
-            </div>
-            <div>
-              <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>HEALTH GAIN</div>
-              <div style={{ fontSize: '2rem', fontWeight: 500, color: C.success }}>{OUT_HSDELTA !== '—' ? sgn(OUT_HSDELTA as number) : '—'}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ══ ROW 6 — AUDIT EVIDENCE ═══════════════════════════════════════ */}
-        <div style={{ padding: '0 4rem', maxWidth: '1600px', margin: '0 auto' }}>
-          <button 
-            onClick={() => setAudit(o => !o)} 
-            style={{
-              background: 'none', border: 'none', color: C.dim, fontSize: '0.75rem', letterSpacing: '0.15em', 
-              cursor: 'pointer', padding: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}
-          >
-            {auditOpen ? 'HIDE EVIDENCE' : 'SHOW EVIDENCE'}
-          </button>
-          
-          {auditOpen && (
-            <div style={{ marginTop: '2rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '3rem', fontFamily: FONT_MONO }}>
-              <div>
-                <div style={{ color: C.dim, fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '1rem' }}>HEALTH SCORE AUDIT</div>
-                {hAudit ? (
-                  <pre style={{ color: C.muted, margin: 0, lineHeight: 1.6, fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
-{`Score   : ${hAudit.health_score}\nBaseline: ${hAudit.baseline}\n\nPENALTIES\n${hAudit.penalties.map(p=>`${p.rule}\n  Pts: ${p.affected_patients} | Wt: ${p.weight} | Pen: ${p.penalty}`).join('\n')}`}
-                  </pre>
-                ) : <span style={{ color: C.dim }}>No data</span>}
-              </div>
-              <div>
-                <div style={{ color: C.dim, fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '1rem' }}>CRITICAL POPULATION AUDIT</div>
-                {cPop ? (
-                  <pre style={{ color: C.muted, margin: 0, lineHeight: 1.6, fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
-{`Critical : ${cPop.critical_patients}\nTotal    : ${cPop.total_patients}\nRate     : ${((cPop.critical_patients/cPop.total_patients)*100).toFixed(1)}%\n\nTOP TRIGGERS\n${cPop.top_trigger_rules.join('\n')}`}
-                  </pre>
-                ) : <span style={{ color: C.dim }}>No data</span>}
-              </div>
-              <div>
-                <div style={{ color: C.dim, fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '1rem' }}>RULE CONSISTENCY AUDIT</div>
-                {rules.length > 0 ? (
-                  <pre style={{ color: C.muted, margin: 0, lineHeight: 1.6, fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
-{rules.map(r=>`${r.rule}\n  Sup: ${r.support} | Conf: ${Math.round(r.confidence*100)}% | Lift: ${r.lift}`).join('\n')}
-                  </pre>
-                ) : <span style={{ color: C.dim }}>No data</span>}
-              </div>
-            </div>
-          )}
-        </div>
-
       </div>
     </PageContainer>
   );
