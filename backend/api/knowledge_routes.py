@@ -40,20 +40,39 @@ def get_copilot() -> KnowledgeCopilot:
 class CopilotRequest(BaseModel):
     question: str
 
+# Lazy initialization for BackgroundJobManager
+_bg_job_manager = None
+def get_bg_job_manager():
+    global _bg_job_manager
+    if _bg_job_manager is None:
+        from pymongo import MongoClient
+        from backend.db.config import settings
+        from backend.intelligence.background_job_manager import BackgroundJobManager
+        mongo_client = MongoClient(settings.mongo_uri)
+        db = mongo_client[settings.mongo_db_name]
+        _bg_job_manager = BackgroundJobManager(db)
+    return _bg_job_manager
+
+@router.get("/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    """
+    Get the status of a background job.
+    """
+    job = get_bg_job_manager().get_job_status(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
 @router.post("/bootstrap")
 async def bootstrap_dataset():
     """
     Idempotent one-click provisioning endpoint.
     Loads the ILPD (act_liver_disease.csv) dataset if not already loaded,
-    and runs the full ingestion and intelligence pipeline.
+    and schedules the full ingestion pipeline as a background job.
     """
     return await run_intelligence_bootstrap()
 
-@router.post("/intelligence/bootstrap")
-async def run_intelligence_bootstrap():
-    """
-    Runs the full end-to-end knowledge ingestion and decision intelligence pipeline.
-    """
+async def _do_bootstrap():
     # 1. Check if already loaded
     try:
         from pymongo import MongoClient
@@ -71,7 +90,6 @@ async def run_intelligence_bootstrap():
     import os
     raw_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "raw", "act_liver_disease.csv")
     if not os.path.exists(raw_path):
-        # Fallback to root if not in backend/data/raw
         raw_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "act_liver_disease.csv")
         
     if not os.path.exists(raw_path):
@@ -120,6 +138,16 @@ async def run_intelligence_bootstrap():
         "graph_edges": len(enriched_relationships),
         "insights_generated": len(insights)
     }
+
+@router.post("/intelligence/bootstrap")
+async def run_intelligence_bootstrap():
+    """
+    Schedules the full end-to-end knowledge ingestion and decision intelligence pipeline.
+    """
+    bg = get_bg_job_manager()
+    job_id = bg.create_job(job_type="intelligence_bootstrap", payload={})
+    bg.schedule_job(job_id, _do_bootstrap())
+    return {"success": True, "job_id": job_id, "status": "queued"}
 
 @router.post("/upload", response_model=UploadJobDTO)
 async def upload_file(file: UploadFile = File(...)):
@@ -399,11 +427,7 @@ async def get_reality_state():
 
 from backend.intelligence.dataset_memory import DatasetMemoryEngine
 
-@router.post("/datasets/register")
-async def register_dataset_snapshot(name: str = "Automated Snapshot"):
-    """
-    Captures the current state of the organization and saves it to MongoDB DatasetHistory.
-    """
+async def _do_register_dataset_snapshot(name: str):
     engine = DatasetMemoryEngine()
     state = await get_reality_state()
     
@@ -449,7 +473,17 @@ async def register_dataset_snapshot(name: str = "Automated Snapshot"):
         quality_score=dataset_summary.get("quality_score", 100.0),
         system_snapshot=state
     )
-    return {"status": "success", "dataset_id": record.dataset_id}
+    return {"success": True, "record_id": record["snapshot_id"]}
+
+@router.post("/datasets/register")
+async def register_dataset_snapshot(name: str = "Automated Snapshot"):
+    """
+    Schedules the background capture of the current state of the organization.
+    """
+    bg = get_bg_job_manager()
+    job_id = bg.create_job(job_type="dataset_register", payload={"name": name})
+    bg.schedule_job(job_id, _do_register_dataset_snapshot(name))
+    return {"success": True, "job_id": job_id, "status": "queued"}
 
 @router.get("/datasets/history")
 async def get_dataset_history():

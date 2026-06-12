@@ -47,35 +47,61 @@ class SemanticGraphBuilder:
                 # Clear existing semantic nodes
                 session.run("MATCH (n) WHERE n.type IN ['Patient', 'SemanticState', 'Rule', 'Evidence', 'Risk', 'Action', 'Variable', 'Community', 'Pattern', 'Hypothesis'] DETACH DELETE n")
                 
-                # Write nodes
+                # Format nodes for UNWIND
+                formatted_nodes = []
                 for n in nodes:
-                    # Map properties safely, removing nested dicts to prevent cypher errors
                     flat_props = {}
-                    for k, v in n["properties"].items():
+                    for k, v in n.get("properties", {}).items():
                         if isinstance(v, dict):
                             flat_props[k] = str(v)
                         elif isinstance(v, list):
                             flat_props[k] = ", ".join(map(str, v))
                         else:
                             flat_props[k] = v
-                            
-                    session.run("""
-                        MERGE (node:KnowledgeAsset {id: $id})
-                        SET node.label = $label,
-                            node.properties = $props
-                    """, id=n["id"], label=n["label"], props=flat_props)
-                    neo4j_nodes_written += 1
-                
-                # Write edges
-                for e in edges:
-                    session.run(f"""
-                        MATCH (a:KnowledgeAsset {{id: $src_id}})
-                        MATCH (b:KnowledgeAsset {{id: $dst_id}})
-                        MERGE (a)-[r:{e['relationship_type']}]->(b)
-                        SET r = $props
-                    """, src_id=e["src_id"], dst_id=e["dst_id"], props=e["properties"])
-                    neo4j_edges_written += 1
                     
+                    formatted_nodes.append({
+                        "id": n["id"],
+                        "label": n["label"],
+                        "properties": flat_props
+                    })
+                
+                # Batch insert nodes using UNWIND
+                if formatted_nodes:
+                    node_query = """
+                    UNWIND $batch AS row
+                    MERGE (node:KnowledgeAsset {id: row.id})
+                    SET node.label = row.label, node.properties = row.properties
+                    """
+                    # Chunk to 5000 nodes per transaction to prevent memory spikes
+                    for i in range(0, len(formatted_nodes), 5000):
+                        batch = formatted_nodes[i:i + 5000]
+                        session.run(node_query, batch=batch)
+                        neo4j_nodes_written += len(batch)
+
+                # Format edges by relationship_type
+                from collections import defaultdict
+                edges_by_type = defaultdict(list)
+                for e in edges:
+                    edges_by_type[e["relationship_type"]].append({
+                        "src_id": e["src_id"],
+                        "dst_id": e["dst_id"],
+                        "properties": e.get("properties", {})
+                    })
+                
+                # Batch insert edges using UNWIND per relationship_type
+                for rel_type, type_edges in edges_by_type.items():
+                    edge_query = f"""
+                    UNWIND $batch AS row
+                    MATCH (a:KnowledgeAsset {{id: row.src_id}})
+                    MATCH (b:KnowledgeAsset {{id: row.dst_id}})
+                    MERGE (a)-[r:{rel_type}]->(b)
+                    SET r = row.properties
+                    """
+                    for i in range(0, len(type_edges), 5000):
+                        batch = type_edges[i:i + 5000]
+                        session.run(edge_query, batch=batch)
+                        neo4j_edges_written += len(batch)
+                        
             logger.info("Persisted semantic graph to Neo4j successfully.")
             logger.info("LOG: graph persisted")
         except Exception as ex:

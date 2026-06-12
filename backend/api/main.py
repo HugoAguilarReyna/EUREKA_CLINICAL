@@ -10,7 +10,11 @@ from backend.api.graph_routes import router as graph_router
 async def lifespan(app: FastAPI):
     print("Iniciando conexión con MongoDB Atlas / Local...")
     await init_db()
-    print("Base de datos conectada exitosamente.")
+    
+    from backend.db.mongo_index_manager import ensure_mongo_indexes
+    ensure_mongo_indexes()
+    
+    print("Base de datos conectada exitosamente y esquemas verificados.")
     
     # Start graph synchronization background threads
     try:
