@@ -7,14 +7,22 @@ interface CommandBandProps {
 }
 
 const CommandBand: React.FC<CommandBandProps> = ({ auditMode, setAuditMode }) => {
-  // Placeholder data – in real app replace with hooks pulling from backend
-  const status = 'CRITICAL';
-  const healthScore = 5;
-  const patients = 392;
-  const decisionConfidence = '84%';
-  const bestAction = 'TARGET ALKPHOS';
-  const expectedImprovement = '221 PATIENTS';
-  const lastUpdate = '2024-09-01 12:34';
+  const [overview, setOverview] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    fetch('/knowledge/executive/overview')
+      .then((res) => res.json())
+      .then((data) => setOverview(data))
+      .catch((e) => console.error('Failed to load overview', e));
+  }, []);
+
+  const status = overview?.mission_status ?? '';
+  const healthScore = overview?.health_score ?? '';
+  const patients = overview?.ground_truth_audit?.patient_count ?? '';
+  const decisionConfidence = overview?.ground_truth_audit?.confidence ?? '';
+  const bestAction = overview?.top_drivers?.[0]?.name ?? '';
+  const expectedImprovement = overview?.ground_truth_audit?.top_action_audit?.value ?? '';
+  const lastUpdate = overview?.timestamp ?? '';
 
   return (
     <div className="command-band" data-testid="command-band">

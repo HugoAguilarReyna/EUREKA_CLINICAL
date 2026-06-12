@@ -126,6 +126,8 @@ export const DashboardPage = () => {
           </div>
         </div>
 
+        {/* TODO: Add domain overview components */}
+
         {/* TOP RISK DRIVERS */}
         <div className="bg-[#111] border border-white/10 p-6 rounded-2xl lg:col-span-2">
           <h3 className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-4 flex items-center gap-2">
@@ -146,21 +148,11 @@ export const DashboardPage = () => {
             ))}
           </div>
         </div>
-      </div>
+      {/* End of Top Risk Drivers section */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    domain.severity === 'MEDIUM' ? 'text-orange-400' : 'text-emerald-400'
-                  }`}>
-                    {domain.score}
-                  </div>
-                  <div className="text-[10px] uppercase font-bold text-gray-500 bg-white/5 px-2 py-1 rounded">
-                    {domain.trend}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          {/* Domain overview components will go here */}
+      </div>
 
         {/* CLINICAL DIGITAL TWIN SIMULATOR */}
         <div className="bg-gradient-to-br from-blue-950/30 to-purple-950/30 border border-blue-500/20 p-6 rounded-2xl relative overflow-hidden">

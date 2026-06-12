@@ -1,36 +1,19 @@
 import React from 'react';
 
 const RootCauseTable: React.FC = () => {
+  const [rows, setRows] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    fetch('/knowledge/executive/overview')
+      .then(res => res.json())
+      .then(data => {
+        const rc = data.root_cause ? [data.root_cause] : [];
+        setRows(rc);
+      })
+      .catch(e => console.error('Failed to load root cause data', e));
+  }, []);
   // Placeholder data – replace with real backend data
-  const rows = [
-    {
-      rank: 1,
-      driver: 'ALKPHOS',
-      impact: 'High',
-      support: '395',
-      confidence: '92%',
-      lift: '1.8',
-      evidence: 'Rule_3_ALKPHOS_HIGH',
-    },
-    {
-      rank: 2,
-      driver: 'CALCIUM',
-      impact: 'Medium',
-      support: '210',
-      confidence: '78%',
-      lift: '1.2',
-      evidence: 'Rule_7_CALCIUM_MED',
-    },
-    {
-      rank: 3,
-      driver: 'SODIUM',
-      impact: 'Low',
-      support: '120',
-      confidence: '65%',
-      lift: '1.0',
-      evidence: 'Rule_12_SODIUM_LOW',
-    },
-  ];
+  // rows are loaded from API
 
   return (
     <div className="panel root-cause" data-testid="root-cause-table">

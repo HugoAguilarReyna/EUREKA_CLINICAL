@@ -1,22 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const DecisionSimulator: React.FC = () => {
-  // Placeholder data – replace with real backend hooks
-  const currentState = {
-    patients: 392,
-    healthScore: 5,
-    driver: 'ALKPHOS',
-  };
-  const ifWeAct = {
-    patients: 171,
-    healthScore: 32,
-    driver: 'ALB',
-  };
-  const improvement = {
-    patientsSaved: 221,
-    riskReduction: '56%',
-    confidence: '84%',
-  };
+  const [data, setData] = useState<{
+    currentState: { patients: number; healthScore: number; driver: string };
+    ifWeAct: { patients: number; healthScore: number; driver: string };
+    improvement: { patientsSaved: number; riskReduction: string; confidence: string };
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/knowledge/executive/simulate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+      .then((res) => res.json())
+      .then((data) => setData(data?.simulation || null))
+      .catch((err) => console.error('Error fetching simulation:', err));
+  }, []);
+
+  if (!data) return <div>No simulation data available</div>;
+
+  const { currentState, ifWeAct, improvement } = data;
 
   return (
     <div className="panel decision-simulator" data-testid="decision-simulator">

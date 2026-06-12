@@ -1,8 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const EvidenceInspector: React.FC = () => {
-  // Placeholder evidence text – in production replace with real audit data from backend
-  const evidence = `AUDIT STREAM\n\nHEALTH SCORE AUDIT\nscore: 5\nbaseline: 100\npenalty: 95\n\nsource_rule: RULE_3_Alkphos_HIGH\nsupport: 392\nconfidence: 0.84`;
+  const [evidence, setEvidence] = useState<string>('Loading...');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [healthRes, criticalRes, ruleRes] = await Promise.all([
+          fetch('/knowledge/executive/audit/health-score').then(res => res.text()),
+          fetch('/knowledge/executive/audit/critical-population').then(res => res.text()),
+          fetch('/knowledge/executive/audit/rule-consistency').then(res => res.text())
+        ]);
+        setEvidence(`${healthRes}\n\n${criticalRes}\n\n${ruleRes}`);
+      } catch (err) {
+        setEvidence('Error loading audit data.');
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="evidence-inspector" data-testid="evidence-inspector">
