@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { ExecutiveIntelligencePage } from './pages/ExecutiveIntelligencePage';
 import { DashboardPage } from './pages/DashboardPage';
+import { ExecutiveConsolePage } from './pages/ExecutiveConsolePage';
 import { KnowledgeGraphPage } from './pages/KnowledgeGraphPage';
 import { ExplainabilityPage } from './pages/ExplainabilityPage';
 import { TraceabilityPage } from './pages/TraceabilityPage';
@@ -23,6 +24,7 @@ function App() {
     <Routes>
       <Route path="/" element={<ExecutiveIntelligencePage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/executive-console" element={<ExecutiveConsolePage />} />
       <Route path="/ingestion" element={<KnowledgeIngestionPage />} />
       <Route path="/copilot" element={<KnowledgeCopilotPage />} />
       <Route path="/graph" element={<KnowledgeGraphPage />} />
