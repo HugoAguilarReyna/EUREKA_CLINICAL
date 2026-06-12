@@ -62,7 +62,7 @@ export const KnowledgeGraph = ({
         }
       } catch (err) {
         console.error("Error fetching semantic graph:", err);
-        setError("Error loading semantic graph data. Make sure backend is running.");
+        setError("Unable To Load Graph");
       } finally {
         setLoading(false);
       }
@@ -78,7 +78,7 @@ export const KnowledgeGraph = ({
       const res = await axios.get(url);
       
       if (res.data.warning || res.data.metadata?.warning) {
-        setError(res.data.message || "Graph exceeds rendering threshold.");
+        setError("Rendering Limits Exceeded");
         return;
       }
       
@@ -90,7 +90,7 @@ export const KnowledgeGraph = ({
         const filteredNew = newNodes.filter((n: any) => !existingIds.has(n.id));
         const merged = [...prevNodes, ...filteredNew];
         if (merged.length > 800) {
-          setError("Graph exceeds rendering threshold (800 nodes).");
+          setError("Rendering Limits Exceeded");
           return prevNodes;
         }
         return merged;
@@ -101,7 +101,7 @@ export const KnowledgeGraph = ({
         const filteredNew = newEdges.filter((e: any) => !existingKeys.has(`${e.src_id}-${e.dst_id}-${e.relationship_type}`));
         const merged = [...prevEdges, ...filteredNew];
         if (merged.length > 1500) {
-          setError("Graph exceeds rendering threshold (1500 edges).");
+          setError("Rendering Limits Exceeded");
           return prevEdges;
         }
         return merged;
@@ -151,10 +151,11 @@ export const KnowledgeGraph = ({
   }
 
   if (error) {
+    const isRenderLimit = error === "Rendering Limits Exceeded";
     return (
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm z-50 p-6 text-center text-red-400">
         <AlertTriangle className="w-12 h-12 text-red-500/80 mb-3" />
-        <h3 className="text-lg font-bold mb-1">Rendering Limits Exceeded</h3>
+        <h3 className="text-lg font-bold mb-1">{isRenderLimit ? "Rendering Limits Exceeded" : "Unable To Load Graph"}</h3>
         <p className="text-sm text-gray-400 max-w-md mb-4">{error}</p>
         <button
           onClick={() => {
@@ -166,6 +167,18 @@ export const KnowledgeGraph = ({
         >
           Reset View
         </button>
+      </div>
+    );
+  }
+
+  if (!loading && !error && nodes.length === 0) {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface/50 backdrop-blur-sm z-10 p-6 text-center">
+        <FileText className="w-12 h-12 text-gray-500/80 mb-3" />
+        <h3 className="text-lg font-bold text-white mb-1">No Graph Data Found</h3>
+        <p className="text-sm text-gray-400 max-w-md">
+          The selected entity does not have a semantic graph representation.
+        </p>
       </div>
     );
   }
@@ -191,7 +204,7 @@ export const KnowledgeGraph = ({
               <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex flex-col gap-1">
                 <div className="flex items-center gap-2 text-red-400 font-bold text-xs uppercase tracking-wider">
                   <AlertTriangle size={14} />
-                  Truncated View
+                  Graph Truncated For Performance
                 </div>
                 <p className="text-gray-300 text-[10px]">
                   Graph exceeded safety limits. 

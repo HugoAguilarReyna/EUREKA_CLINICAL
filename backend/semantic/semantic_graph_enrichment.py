@@ -90,6 +90,7 @@ class SemanticGraphEnrichment:
         nodes = []
         edges = []
         node_ids = set()
+        edge_set = set()
         
         def add_node(nid: str, label: str, props: Dict[str, Any]):
             if nid not in node_ids:
@@ -101,12 +102,15 @@ class SemanticGraphEnrichment:
                 })
 
         def add_edge(src: str, dst: str, rel_type: str, props: Dict[str, Any] = None):
-            edges.append({
-                "src_id": src,
-                "dst_id": dst,
-                "relationship_type": rel_type,
-                "properties": props or {}
-            })
+            key = (src, dst, rel_type)
+            if key not in edge_set:
+                edge_set.add(key)
+                edges.append({
+                    "src_id": src,
+                    "dst_id": dst,
+                    "relationship_type": rel_type,
+                    "properties": props or {}
+                })
 
         # Fetch current dataset metadata
         meta = self.db["dataset_metadata"].find_one({"id": "Dataset_Metadata_Global"})

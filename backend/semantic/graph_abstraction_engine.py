@@ -184,7 +184,18 @@ class GraphAbstractionEngine:
 
             matched_nodes = matched_nodes[:scope_limit]
             matched_node_ids = {n["id"] for n in matched_nodes}
-            matched_edges = [e for e in edges if e["src_id"] in matched_node_ids and e["dst_id"] in matched_node_ids]
+            
+            # Deduplicate edges
+            seen = set()
+            unique_edges = []
+            for e in edges:
+                if e["src_id"] in matched_node_ids and e["dst_id"] in matched_node_ids:
+                    key = (e["src_id"], e["dst_id"], e["relationship_type"])
+                    if key not in seen:
+                        seen.add(key)
+                        unique_edges.append(e)
+                        
+            matched_edges = unique_edges
                 
             # Enforce expansion budget properties on returned nodes
             import copy
