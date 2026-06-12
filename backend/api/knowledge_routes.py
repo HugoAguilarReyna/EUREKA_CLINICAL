@@ -66,6 +66,7 @@ async def initialize_system() -> Dict[str, Any]:
         from pymongo import MongoClient
         from backend.db.config import settings
         from backend.graph.client import Neo4jClient
+        from datetime import datetime
         
         logger.info("Initializing knowledge system...")
         
