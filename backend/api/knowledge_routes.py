@@ -700,11 +700,12 @@ async def get_semantic_graph(
             return cached_data
             
     builder = SemanticGraphBuilder()
-    # Only build and persist graph if it is empty to optimize response time to <10ms
-    if builder.nodes_col.count_documents({}) == 0:
-        builder.build_and_persist_graph()
     graph_data = builder.get_semantic_graph()
     
+    # If graph is empty, return empty
+    if not graph_data or not graph_data.get("nodes"):
+        return {"nodes": [], "edges": []}
+
     # Slice the graph using the abstraction engine
     view = GraphAbstractionEngine.get_abstract_view(
         nodes=graph_data["nodes"],
