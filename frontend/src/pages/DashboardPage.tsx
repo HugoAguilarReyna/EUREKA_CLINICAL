@@ -36,17 +36,30 @@ interface SimResult {
 interface HealthAudit { health_score: number; baseline: number; penalties: { rule: string; affected_patients: number; confidence: number; weight: number; penalty: number }[]; }
 interface CritPop { critical_patients: number; total_patients: number; top_trigger_rules: string[]; }
 
-// ── Design tokens ──────────────────────────────────────────────────────────
-const C = { bg:'#05070A', panel:'#0B1118', border:'#1E293B', text:'#E5E7EB', muted:'#94A3B8', dim:'#475569', pos:'#22C55E', warn:'#F59E0B', crit:'#EF4444', blue:'#60A5FA', purple:'#A78BFA' };
-const M: React.CSSProperties = { fontFamily:"'IBM Plex Mono',monospace" };
-const sc = (s:string) => s==='GREEN'?C.pos:s==='YELLOW'?C.warn:s==='ORANGE'?'#F97316':C.crit;
+// ── Design tokens (Premium: Palantir/Apple/Bloomberg grade) ─────────────────
+const C = {
+  bg: '#05080F',        // Deep neutral outer
+  panel: '#0B1220',     // Deep neutral panel
+  border: '#1E293B',    // Subtle separator
+  text: '#E2E8F0',      // Primary crisp text
+  muted: '#94A3B8',     // Secondary text
+  dim: '#475569',       // Tertiary / labels
+  accent: '#3B82F6',    // Electric blue
+  success: '#22C55E',   // Positive green
+};
+
+const FONT_SANS = "Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif";
+const FONT_MONO = "'IBM Plex Mono', monospace";
+
 const fmtTs = (ts:number) => ts ? new Date(ts*1000).toISOString().substring(11,16)+' UTC' : '—';
 const sgn = (v:number) => v>0?`+${v}`:`${v}`;
 
-const P: React.CSSProperties = { background:C.panel, border:`1px solid ${C.border}`, overflow:'auto', padding:16 };
-const Lbl = ({children}:{children:React.ReactNode}) => <div style={{color:C.dim,fontSize:'0.65rem',letterSpacing:3,marginBottom:12,...M}}>{children}</div>;
-const TH = ({c=''}:{c?:string}) => (t:string) => <th style={{borderBottom:`1px solid ${C.border}`,padding:'4px',textAlign:'left',color:C.dim,fontWeight:600,...M,fontSize:'0.65rem'}}>{t}</th>;
-const TD = ({children,color=C.text}:{children:React.ReactNode;color?:string}) => <td style={{borderBottom:`1px solid ${C.border}`,padding:'4px',color,...M,fontSize:'0.65rem'}}>{children}</td>;
+// Sub-components for Typography
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ color: C.dim, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '1.5rem', fontFamily: FONT_SANS }}>
+    {children}
+  </div>
+);
 
 // ── Component ──────────────────────────────────────────────────────────────
 export const DashboardPage = () => {
@@ -89,10 +102,10 @@ export const DashboardPage = () => {
     })();
   }, []);
 
-  if (loading) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,color:C.blue,...M}}>INITIALIZING DECISION ENGINE...</div>;
-  if (err||!ov) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,color:C.crit,...M}}>{err??'NO DATA'}</div>;
+  if (loading) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,color:C.accent,fontFamily:FONT_SANS,letterSpacing:'0.1em'}}>INITIALIZING DECISION INTELLIGENCE PLATFORM...</div>;
+  if (err||!ov) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,color:C.text,fontFamily:FONT_SANS}}>{err??'NO DATA'}</div>;
 
-  // Derived
+  // Derived values
   const STATUS   = ov.mission_status;
   const HS       = ov.health_score;
   const PATIENTS = ov.ground_truth_audit?.patient_count ?? '—';
@@ -100,261 +113,272 @@ export const DashboardPage = () => {
   const DIMPACT  = ov.root_cause?.impact ?? '—';
   const DCONF    = ov.root_cause?.confidence != null ? `${Math.round(ov.root_cause.confidence*100)}%` : '—';
   const DPTS     = ov.root_cause?.affected_patients ?? '—';
-  const SRULE    = ov.root_cause?.ground_truth_audit?.source_rule ?? '—';
-  const LIFT     = ov.root_cause?.ground_truth_audit?.lift ?? '—';
   const BALERT   = ov.priority_alerts?.[0];
   const BACTION  = BALERT?.title ?? '—';
   const BCONF    = BALERT?.confidence != null ? `${Math.round(BALERT.confidence*100)}%` : '—';
-  const IMPROV   = ov.ground_truth_audit?.top_action_audit?.value != null ? `${ov.ground_truth_audit.top_action_audit.value.toFixed(0)} PTS` : '—';
   const UPDATED  = fmtTs(ov.timestamp);
-  const TOP3     = ov.priority_alerts?.slice(0,3) ?? [];
+  const TOP3     = ov.priority_alerts?.slice(0,4) ?? []; // grab 4 to have top 1 + 3 alts
 
   const OUT_CURRENT   = sim ? sim.baseline_critical_patients  : PATIENTS;
   const OUT_PROJECTED = sim ? sim.projected_critical_patients  : '—';
   const OUT_DELTA     = sim ? Math.abs(sim.critical_patients_delta) : '—';
   const OUT_HSDELTA   = sim ? sim.health_score_delta : '—';
 
-  // Derived for economic impact
   const benefitIndex = (OUT_DELTA !== '—' && BALERT?.confidence) ? Math.round((OUT_DELTA as number) * BALERT.confidence) : '—';
 
   return (
     <PageContainer title="EUREKA DECISION ENGINE">
-
-      {/* ══ ROW 1 — MISSION BAND ══════════════════════════════════════════ */}
-      <div style={{height:56,background:C.panel,borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',padding:'0 16px',gap:32,overflowX:'auto',flexShrink:0,marginBottom:8,...M,fontSize:'0.76rem'}}>
-        {([
-          ['STATUS',      <span style={{color:sc(STATUS),fontWeight:700}}>{STATUS}</span>],
-          ['HEALTH',      <span style={{color:sc(STATUS),fontWeight:700}}>{HS}</span>],
-          ['PATIENTS',    <span style={{color:C.text}}>{PATIENTS}</span>],
-          ['DRIVER',      <span style={{color:C.warn}}>{DRIVER.toUpperCase()}</span>],
-          ['CONFIDENCE',  <span style={{color:C.pos}}>{DCONF}</span>],
-          ['ACTION',      <span style={{color:C.blue}}>{BACTION.toUpperCase()}</span>],
-          ['IMPROVEMENT', <span style={{color:C.purple}}>{IMPROV}</span>],
-          ['UPDATED',     <span style={{color:C.muted}}>{UPDATED}</span>],
-        ] as [string,React.ReactNode][]).map(([l,v],i) => (
-          <div key={i} style={{whiteSpace:'nowrap',flexShrink:0}}>
-            <span style={{color:C.dim,marginRight:6}}>{l}:</span>{v}
-          </div>
-        ))}
-      </div>
-
-      {/* ══ ROW 2 — EXECUTIVE DECISION (DOMINANT) ═════════════════════════ */}
-      <div style={{
-        margin:'0 8px 8px',
-        background:C.panel,
-        border:`1px solid ${C.border}`,
-        borderTop:`6px solid ${C.blue}`,
-        minHeight:350,
-        display:'flex',
-        flexDirection:'column',
-        alignItems:'center',
-        justifyContent:'center',
-        padding:'40px 32px',
-        ...M,
-      }}>
-        <div style={{color:C.dim,fontSize:'0.8rem',letterSpacing:4,marginBottom:8}}>RECOMMENDED ACTION</div>
-        <div style={{color:C.blue,fontSize:'3rem',fontWeight:700,lineHeight:1,marginBottom:40,textAlign:'center'}}>
-          {BACTION.toUpperCase()}
-        </div>
-
-        <div style={{color:C.dim,fontSize:'0.8rem',letterSpacing:4,marginBottom:12}}>EXPECTED IMPACT</div>
-        <div style={{display:'flex',alignItems:'baseline',gap:16,marginBottom:32}}>
-          <span style={{color:C.pos,fontSize:'6rem',fontWeight:700,lineHeight:1}}>{OUT_DELTA}</span>
-          <span style={{color:C.pos,fontSize:'2rem',fontWeight:700,lineHeight:1,letterSpacing:2}}>PATIENTS IMPROVED</span>
-        </div>
-
-        <div style={{display:'flex',gap:64,alignItems:'center'}}>
-          <div style={{textAlign:'center'}}>
-            <div style={{color:C.dim,fontSize:'0.75rem',letterSpacing:3,marginBottom:8}}>OUTCOME TRAJECTORY</div>
-            <div style={{color:C.text,fontSize:'2rem',fontWeight:700}}>
-              {OUT_CURRENT} <span style={{color:C.dim,margin:'0 12px'}}>→</span> <span style={{color:C.pos}}>{OUT_PROJECTED}</span>
-            </div>
-          </div>
-          
-          <div style={{width:1,height:60,background:C.border}}/>
-
-          <div style={{textAlign:'center'}}>
-            <div style={{color:C.dim,fontSize:'0.75rem',letterSpacing:3,marginBottom:8}}>CONFIDENCE</div>
-            <div style={{color:C.pos,fontSize:'2rem',fontWeight:700}}>{BCONF}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* ══ ROW 3 — DECISION GRID  20 | 45 | 35 ═════════════════════════ */}
-      <div style={{display:'grid',gridTemplateColumns:'20% 45% 35%',gap:8,padding:'0 8px',marginBottom:8}}>
-
-        {/* ── LEFT: WHY ────────────────────────────────────────────────── */}
-        <div style={P}>
-          <Lbl>PRIMARY ROOT CAUSE</Lbl>
-          <div style={{color:C.warn,fontSize:'1.6rem',fontWeight:700,...M,marginBottom:16}}>{DRIVER.toUpperCase()}</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px',...M,fontSize:'0.75rem',marginBottom:24}}>
-            <div><span style={{color:C.dim}}>Impact</span><br/><span style={{color:C.crit,fontWeight:700}}>{DIMPACT}%</span></div>
-            <div><span style={{color:C.dim}}>Patients</span><br/><span style={{color:C.text}}>{DPTS}</span></div>
-            <div><span style={{color:C.dim}}>Confidence</span><br/><span style={{color:C.pos}}>{DCONF}</span></div>
-            <div><span style={{color:C.dim}}>Lift</span><br/><span style={{color:C.muted}}>{LIFT}</span></div>
-            <div style={{gridColumn:'1/-1'}}><span style={{color:C.dim}}>Source Rule</span><br/><span style={{color:C.muted}}>{SRULE}</span></div>
-          </div>
-          
-          <table style={{width:'100%',borderCollapse:'collapse'}}>
-            <thead><tr>{['Rank','Driver','Imp'].map(h => <th key={h} style={{borderBottom:`1px solid ${C.border}`,padding:'4px',textAlign:'left',color:C.dim,fontWeight:600,...M,fontSize:'0.65rem'}}>{h}</th>)}</tr></thead>
-            <tbody>
-              {ov.top_drivers.slice(0,5).map((d,i) => (
-                <tr key={d.name}>
-                  <TD color={C.dim}>{i+1}</TD>
-                  <TD color={C.warn}>{d.name}</TD>
-                  <TD color={C.crit}>{d.impact}%</TD>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ── CENTER: WHAT IF (DIGITAL TWIN) ────────────────────────────── */}
-        <div style={{...P, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'32px 16px'}}>
-          <div style={{color:C.dim,fontSize:'0.8rem',letterSpacing:3,marginBottom:8,...M,textAlign:'center'}}>TWIN SIMULATOR</div>
-          <div style={{color:C.blue,fontSize:'1.2rem',fontWeight:700,marginBottom:32,...M,textAlign:'center'}}>TARGETING {DRIVER.toUpperCase()}</div>
-          
-          <div style={{display:'flex',flexDirection:'column',gap:16,width:'100%',maxWidth:300}}>
-            <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:'16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{color:C.dim,letterSpacing:2,fontSize:'0.7rem'}}>CURRENT</span>
-              <span style={{color:C.crit,fontSize:'2rem',fontWeight:700}}>{OUT_CURRENT}</span>
-            </div>
-            
-            <div style={{textAlign:'center',color:C.dim,fontSize:'1.6rem',margin:'-8px 0'}}>↓</div>
-            
-            <div style={{background:C.bg,border:`2px solid ${C.pos}`,padding:'16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{color:C.pos,letterSpacing:2,fontSize:'0.7rem'}}>PROJECTED</span>
-              <span style={{color:C.pos,fontSize:'2rem',fontWeight:700}}>{OUT_PROJECTED}</span>
-            </div>
-            
-            <div style={{textAlign:'center',color:C.dim,fontSize:'1.6rem',margin:'-8px 0'}}>↓</div>
-            
-            <div style={{background:C.bg,border:`1px solid ${C.border}`,padding:'16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{color:C.dim,letterSpacing:2,fontSize:'0.7rem'}}>GAIN</span>
-              <span style={{color:C.pos,fontSize:'2rem',fontWeight:700}}>{OUT_DELTA}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── RIGHT: ACTION ENGINE ──────────────────────────────────────── */}
-        <div style={P}>
-          <Lbl>ACTION ENGINE</Lbl>
-          
-          <div style={{background:C.bg,border:`1px solid ${C.border}`,borderLeft:`4px solid ${C.blue}`,padding:'16px',marginBottom:24}}>
-            <div style={{color:C.dim,fontSize:'0.65rem',letterSpacing:3,marginBottom:8,...M}}>PRIMARY RECOMMENDATION</div>
-            <div style={{color:C.blue,fontSize:'1.4rem',fontWeight:700,...M,marginBottom:16}}>{BACTION.toUpperCase()}</div>
-            <div style={{display:'flex',gap:32,...M,fontSize:'0.8rem'}}>
-              <div>
-                <div style={{color:C.dim,fontSize:'0.65rem',marginBottom:4}}>IMPACT</div>
-                <div style={{color:C.text,fontWeight:700,fontSize:'1.4rem'}}>{BALERT?.population_affected ?? '—'}</div>
-              </div>
-              <div>
-                <div style={{color:C.dim,fontSize:'0.65rem',marginBottom:4}}>CONFIDENCE</div>
-                <div style={{color:C.pos,fontWeight:700,fontSize:'1.4rem'}}>{BCONF}</div>
-              </div>
-            </div>
-          </div>
-
-          <table style={{width:'100%',borderCollapse:'collapse'}}>
-            <thead><tr>{['Rank','Action','Pts','Conf'].map(h=><th key={h} style={{borderBottom:`1px solid ${C.border}`,padding:'4px',textAlign:'left',color:C.dim,fontWeight:600,...M,fontSize:'0.65rem'}}>{h}</th>)}</tr></thead>
-            <tbody>
-              {TOP3.map((a,i)=>(
-                <tr key={a.id}>
-                  <TD color={C.dim}>{i+1}</TD>
-                  <TD color={i===0?C.blue:C.text}>{a.title}</TD>
-                  <TD>{a.population_affected}</TD>
-                  <TD color={C.pos}>{Math.round(a.confidence*100)}%</TD>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ══ ROW 4 — MISSION TIMELINE ═════════════════════════════════════ */}
-      <div style={{
-        margin:'0 8px 8px',
-        background:C.panel,
-        border:`1px solid ${C.border}`,
-        padding:'24px',
-        ...M,
-      }}>
-        <Lbl>MISSION TIMELINE</Lbl>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',position:'relative',marginTop:24}}>
-          <div style={{position:'absolute',top:10,left:0,right:0,height:2,background:C.border,zIndex:1}}/>
-          
-          {['7D AGO', '72H AGO', '24H AGO', 'NOW'].map((t, i) => (
-            <div key={t} style={{display:'flex',flexDirection:'column',alignItems:'center',zIndex:2,background:C.panel,padding:'0 16px'}}>
-              <div style={{width:20,height:20,borderRadius:'50%',background:C.bg,border:`2px solid ${i===3?C.blue:C.border}`,marginBottom:12}}/>
-              <div style={{color:i===3?C.blue:C.dim,fontSize:'0.7rem',fontWeight:700,letterSpacing:2}}>{t}</div>
-            </div>
-          ))}
-        </div>
+      <div style={{ fontFamily: FONT_SANS, background: C.bg, minHeight: '100vh', color: C.text, paddingBottom: '4rem' }}>
         
-        <div style={{textAlign:'center',color:C.dim,fontSize:'0.85rem',marginTop:32,letterSpacing:4,padding:'16px',background:C.bg,border:`1px solid ${C.border}`}}>
-          HISTORICAL DATA NOT AVAILABLE
+        {/* ══ ROW 1 — MISSION BAND ══════════════════════════════════════════ */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '1.5rem 3rem', background: C.panel, marginBottom: '1rem',
+          borderBottom: `1px solid ${C.border}`
+        }}>
+          <div style={{ display: 'flex', gap: '3rem' }}>
+            <div>
+              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>STATUS</div>
+              <div style={{ fontSize: '1rem', fontWeight: 600 }}>{STATUS}</div>
+            </div>
+            <div>
+              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>HEALTH SCORE</div>
+              <div style={{ fontSize: '1rem', fontWeight: 600 }}>{HS}</div>
+            </div>
+            <div>
+              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>CRITICAL PATIENTS</div>
+              <div style={{ fontSize: '1rem', fontWeight: 600 }}>{PATIENTS}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '3rem', textAlign: 'right' }}>
+            <div>
+              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>PRIMARY DRIVER</div>
+              <div style={{ fontSize: '1rem', fontWeight: 600, color: C.text }}>{DRIVER.toUpperCase()}</div>
+            </div>
+            <div>
+              <div style={{ color: C.dim, fontSize: '0.65rem', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>LAST UPDATE</div>
+              <div style={{ fontSize: '1rem', fontWeight: 400, color: C.muted, fontFamily: FONT_MONO }}>{UPDATED}</div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* ══ ROW 5 — ECONOMIC IMPACT ══════════════════════════════════════ */}
-      <div style={{
-        margin:'0 8px 8px',
-        background:C.panel,
-        border:`1px solid ${C.border}`,
-        display:'flex',
-        alignItems:'center',
-        padding:'24px 32px',
-        gap:48,
-        ...M,
-      }}>
-        {([
-          ['COST OF INACTION',    <span style={{color:C.crit}}>{PATIENTS} PTS AT RISK</span>],
-          ['ESTIMATED BENEFIT',   <span style={{color:C.pos}}>{benefitIndex} BENEFIT INDEX</span>],
-          ['PATIENTS IMPROVED',   <span style={{color:C.pos}}>{OUT_DELTA}</span>],
-          ['HEALTH GAIN',         <span style={{color:C.pos}}>{OUT_HSDELTA!=='—'?sgn(OUT_HSDELTA as number):'—'} PTS</span>],
-        ] as [string,React.ReactNode][]).map(([l,v],i) => (
-          <div key={i} style={{flex:1}}>
-            <div style={{color:C.dim,fontSize:'0.7rem',letterSpacing:2,marginBottom:8}}>{l}</div>
-            <div style={{fontSize:'1.6rem',fontWeight:700}}>{v}</div>
+        {/* ══ ROW 2 — OUTCOME HERO SECTION ═════════════════════════════════ */}
+        <div style={{
+          padding: '6rem 2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          background: `radial-gradient(ellipse at center, #111A30 0%, ${C.bg} 70%)`,
+        }}>
+          <div style={{ color: C.accent, fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.2em', marginBottom: '1.5rem' }}>
+            RECOMMENDED ACTION
           </div>
-        ))}
-      </div>
+          
+          <div style={{ fontSize: '2.5rem', fontWeight: 500, letterSpacing: '-0.02em', color: C.text, marginBottom: '4rem' }}>
+            {BACTION.toUpperCase()}
+          </div>
 
-      {/* ══ ROW 6 — AUDIT EVIDENCE ═══════════════════════════════════════ */}
-      <div style={{margin:'0 8px 8px',...M}}>
-        <button onClick={()=>setAudit(o=>!o)} style={{width:'100%',textAlign:'left',background:C.panel,border:`1px solid ${C.border}`,color:C.dim,padding:'12px 16px',fontSize:'0.75rem',cursor:'pointer'}}>
-          {auditOpen?'▲':'▼'} SHOW EVIDENCE
-        </button>
-        {auditOpen && (
-          <div style={{background:C.panel,border:`1px solid ${C.border}`,borderTop:'none',padding:24,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:32,fontSize:'0.7rem'}}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ color: C.success, fontSize: '7rem', fontWeight: 700, lineHeight: 1, letterSpacing: '-0.03em', textShadow: '0 0 40px rgba(34, 197, 94, 0.2)' }}>
+              {OUT_DELTA}
+            </div>
+            <div style={{ color: C.success, fontSize: '1.5rem', fontWeight: 500, letterSpacing: '0.1em', marginTop: '1rem' }}>
+              PATIENTS IMPROVED
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', marginTop: '4rem', color: C.muted, fontSize: '1.1rem', fontWeight: 400 }}>
+            <div>{OUT_CURRENT} <span style={{ color: C.dim, margin: '0 0.5rem' }}>→</span> {OUT_PROJECTED}</div>
+            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.dim }} />
+            <div>{BCONF} CONFIDENCE</div>
+          </div>
+        </div>
+
+        {/* ══ ROW 3 — DECISION GRID  25 | 40 | 35 ═════════════════════════ */}
+        <div style={{ display: 'grid', gridTemplateColumns: '25% 40% 35%', gap: '4rem', padding: '2rem 4rem', maxWidth: '1600px', margin: '0 auto' }}>
+          
+          {/* ── WHY (Root Cause) ── */}
+          <div>
+            <SectionLabel>ROOT CAUSE</SectionLabel>
+            
+            <div style={{ marginBottom: '2.5rem' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.5rem' }}>{DRIVER}</div>
+              <div style={{ display: 'flex', gap: '1.5rem', color: C.muted, fontSize: '0.9rem' }}>
+                <div>Impact: <span style={{ color: C.text, fontWeight: 500 }}>{DIMPACT}%</span></div>
+                <div>Patients: <span style={{ color: C.text, fontWeight: 500 }}>{DPTS}</span></div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {ov.top_drivers.slice(0,5).map((d, i) => (
+                <div key={d.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ color: C.dim, fontWeight: 500, width: '1rem' }}>{i + 1}</span>
+                    <span style={{ color: i === 0 ? C.text : C.muted, fontWeight: i === 0 ? 600 : 400 }}>{d.name}</span>
+                  </div>
+                  <span style={{ color: C.text, fontWeight: 500 }}>{d.impact}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── WHAT IF (Digital Twin) ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}` }}>
+            <SectionLabel>DIGITAL TWIN</SectionLabel>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '2rem' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>CURRENT</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 600 }}>{OUT_CURRENT}</div>
+              </div>
+
+              <div style={{ color: C.dim, fontSize: '1.5rem' }}>↓</div>
+
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>PROJECTED</div>
+                <div style={{ color: C.text, fontSize: '2.5rem', fontWeight: 600 }}>{OUT_PROJECTED}</div>
+              </div>
+
+              <div style={{ color: C.dim, fontSize: '1.5rem' }}>↓</div>
+
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.15em', marginBottom: '0.5rem' }}>IMPACT</div>
+                <div style={{ color: C.success, fontSize: '2.5rem', fontWeight: 600 }}>{OUT_DELTA}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── ACTION ENGINE ── */}
+          <div>
+            <SectionLabel>ACTION ENGINE</SectionLabel>
+
+            <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', marginBottom: '2rem' }}>
+              <div style={{ color: C.accent, fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', marginBottom: '0.75rem' }}>TOP ACTION</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', color: C.text }}>{BACTION}</div>
+              <div style={{ display: 'flex', gap: '2rem', fontSize: '0.9rem' }}>
+                <div><span style={{ color: C.dim, marginRight: '0.5rem' }}>Impact</span><span style={{ color: C.success, fontWeight: 500 }}>{BALERT?.population_affected ?? '—'} pts</span></div>
+                <div><span style={{ color: C.dim, marginRight: '0.5rem' }}>Confidence</span><span style={{ color: C.text, fontWeight: 500 }}>{BCONF}</span></div>
+              </div>
+            </div>
+
+            <div style={{ color: C.dim, fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', marginBottom: '1rem' }}>ALTERNATIVES</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {TOP3.slice(1).map((a, i) => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: C.panel, borderRadius: '8px' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 500, color: C.muted }}>{a.title}</div>
+                  <div style={{ fontSize: '0.85rem', color: C.text, fontWeight: 500 }}>{a.population_affected} pts</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ══ ROW 4 — MISSION TIMELINE ═════════════════════════════════════ */}
+        <div style={{ padding: '4rem 4rem 2rem', maxWidth: '1600px', margin: '0 auto' }}>
+          <SectionLabel>MISSION HISTORY</SectionLabel>
+          
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', margin: '3rem 0 4rem' }}>
+            {/* Connecting Line */}
+            <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: C.border, zIndex: 1, transform: 'translateY(-50%)' }} />
+            
+            {['7D AGO', '72H AGO', '24H AGO', 'NOW'].map((t, i) => {
+              const isNow = i === 3;
+              return (
+                <div key={t} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, background: C.bg, padding: '0 1rem' }}>
+                  <div style={{
+                    width: 12, height: 12, borderRadius: '50%',
+                    background: isNow ? C.accent : C.panel,
+                    border: `2px solid ${isNow ? C.accent : C.dim}`,
+                    marginBottom: '1rem',
+                    boxShadow: isNow ? `0 0 12px ${C.accent}` : 'none'
+                  }} />
+                  <div style={{ color: isNow ? C.text : C.dim, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em' }}>{t}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', color: C.muted, fontSize: '0.9rem', lineHeight: 1.6 }}>
             <div>
-              <div style={{color:C.dim,letterSpacing:2,marginBottom:12}}>HEALTH SCORE AUDIT</div>
-              {hAudit ? (
-                <pre style={{color:C.text,margin:0,lineHeight:1.8,fontSize:'0.65rem',whiteSpace:'pre-wrap',...M}}>
-{`Score   : ${hAudit.health_score}\nBaseline: ${hAudit.baseline}\n\nPENALTIES\n${hAudit.penalties.map(p=>`${p.rule}\n  Patients : ${p.affected_patients}\n  Weight   : ${p.weight}\n  Penalty  : ${p.penalty}`).join('\n')}`}
-                </pre>
-              ) : <span style={{color:C.dim}}>No data</span>}
+              <p>Historical telemetry unavailable.</p>
+              <p>Current deployment only provides:</p>
+            </div>
+            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: C.dim }}>
+              <li>Current Health Score</li>
+              <li>Current Critical Population</li>
+              <li>Current Root Cause</li>
+              <li>Current Action Ranking</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* ══ ROW 5 — ECONOMIC IMPACT ══════════════════════════════════════ */}
+        <div style={{ padding: '2rem 4rem 4rem', maxWidth: '1600px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: `1px solid ${C.border}`, paddingTop: '4rem' }}>
+            <div>
+              <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>COST OF INACTION</div>
+              <div style={{ fontSize: '2rem', fontWeight: 500, color: C.text }}>{PATIENTS} PTS AT RISK</div>
             </div>
             <div>
-              <div style={{color:C.dim,letterSpacing:2,marginBottom:12}}>CRITICAL POPULATION AUDIT</div>
-              {cPop ? (
-                <pre style={{color:C.text,margin:0,lineHeight:1.8,fontSize:'0.65rem',whiteSpace:'pre-wrap',...M}}>
+              <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>ESTIMATED BENEFIT</div>
+              <div style={{ fontSize: '2rem', fontWeight: 500, color: C.text }}>{benefitIndex} INDEX</div>
+            </div>
+            <div>
+              <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>PATIENTS IMPROVED</div>
+              <div style={{ fontSize: '2rem', fontWeight: 500, color: C.success }}>{OUT_DELTA}</div>
+            </div>
+            <div>
+              <div style={{ color: C.dim, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>HEALTH GAIN</div>
+              <div style={{ fontSize: '2rem', fontWeight: 500, color: C.success }}>{OUT_HSDELTA !== '—' ? sgn(OUT_HSDELTA as number) : '—'}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ══ ROW 6 — AUDIT EVIDENCE ═══════════════════════════════════════ */}
+        <div style={{ padding: '0 4rem', maxWidth: '1600px', margin: '0 auto' }}>
+          <button 
+            onClick={() => setAudit(o => !o)} 
+            style={{
+              background: 'none', border: 'none', color: C.dim, fontSize: '0.75rem', letterSpacing: '0.15em', 
+              cursor: 'pointer', padding: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem'
+            }}
+          >
+            {auditOpen ? 'HIDE EVIDENCE' : 'SHOW EVIDENCE'}
+          </button>
+          
+          {auditOpen && (
+            <div style={{ marginTop: '2rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '3rem', fontFamily: FONT_MONO }}>
+              <div>
+                <div style={{ color: C.dim, fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '1rem' }}>HEALTH SCORE AUDIT</div>
+                {hAudit ? (
+                  <pre style={{ color: C.muted, margin: 0, lineHeight: 1.6, fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
+{`Score   : ${hAudit.health_score}\nBaseline: ${hAudit.baseline}\n\nPENALTIES\n${hAudit.penalties.map(p=>`${p.rule}\n  Pts: ${p.affected_patients} | Wt: ${p.weight} | Pen: ${p.penalty}`).join('\n')}`}
+                  </pre>
+                ) : <span style={{ color: C.dim }}>No data</span>}
+              </div>
+              <div>
+                <div style={{ color: C.dim, fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '1rem' }}>CRITICAL POPULATION AUDIT</div>
+                {cPop ? (
+                  <pre style={{ color: C.muted, margin: 0, lineHeight: 1.6, fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
 {`Critical : ${cPop.critical_patients}\nTotal    : ${cPop.total_patients}\nRate     : ${((cPop.critical_patients/cPop.total_patients)*100).toFixed(1)}%\n\nTOP TRIGGERS\n${cPop.top_trigger_rules.join('\n')}`}
-                </pre>
-              ) : <span style={{color:C.dim}}>No data</span>}
+                  </pre>
+                ) : <span style={{ color: C.dim }}>No data</span>}
+              </div>
+              <div>
+                <div style={{ color: C.dim, fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '1rem' }}>RULE CONSISTENCY AUDIT</div>
+                {rules.length > 0 ? (
+                  <pre style={{ color: C.muted, margin: 0, lineHeight: 1.6, fontSize: '0.75rem', whiteSpace: 'pre-wrap' }}>
+{rules.map(r=>`${r.rule}\n  Sup: ${r.support} | Conf: ${Math.round(r.confidence*100)}% | Lift: ${r.lift}`).join('\n')}
+                  </pre>
+                ) : <span style={{ color: C.dim }}>No data</span>}
+              </div>
             </div>
-            <div>
-              <div style={{color:C.dim,letterSpacing:2,marginBottom:12}}>RULE CONSISTENCY AUDIT</div>
-              {rules.length>0 ? (
-                <pre style={{color:C.text,margin:0,lineHeight:1.8,fontSize:'0.65rem',whiteSpace:'pre-wrap',...M}}>
-{rules.map(r=>`${r.rule}\n  Support: ${r.support}  Conf: ${Math.round(r.confidence*100)}%  Lift: ${r.lift}  Pts: ${r.patient_count}`).join('\n')}
-                </pre>
-              ) : <span style={{color:C.dim}}>No data</span>}
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
+      </div>
     </PageContainer>
   );
 };
