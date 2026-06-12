@@ -25,7 +25,7 @@ const navGroups = [
   {
     title: 'Analytics',
     items: [
-      { path: '/dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
+
       { path: '/influence', label: 'Influence Explorer', icon: Activity },
       { path: '/explain', label: 'Explainability Explorer', icon: Share2 },
       { path: '/trace', label: 'Traceability Explorer', icon: GitBranch }
