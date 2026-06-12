@@ -53,6 +53,93 @@ def get_bg_job_manager():
         _bg_job_manager = BackgroundJobManager(db)
     return _bg_job_manager
 
+
+# ============================================================================
+# [PATCHED BY EPIC 10.0B] Missing endpoints added by auto-patch script
+# ============================================================================
+
+@router.post("/initialize")
+async def initialize_system() -> Dict[str, Any]:
+    """Initialize the knowledge system at startup."""
+    try:
+        from mongo_index_manager import MongoIndexManager
+        
+        logger.info("Initializing knowledge system...")
+        
+        # Create MongoDB indexes
+        index_manager = MongoIndexManager(mongo_db)
+        index_results = index_manager.create_all_indexes()
+        logger.info(f"Indexes created: {index_results}")
+        
+        # Verify Neo4j connection
+        try:
+            neo4j_check = neo4j_session.run("RETURN 'Neo4j OK' AS status").single()
+            neo4j_status = "connected"
+        except Exception as e:
+            logger.warning(f"Neo4j connection check failed: {e}")
+            neo4j_status = "error"
+        
+        # Verify MongoDB connection
+        try:
+            mongo_db.command("ping")
+            mongo_status = "connected"
+        except Exception as e:
+            logger.warning(f"MongoDB connection check failed: {e}")
+            mongo_status = "error"
+        
+        return {
+            "status": "initialized",
+            "neo4j": neo4j_status,
+            "mongo": mongo_status,
+            "indexes": index_results,
+            "timestamp": datetime.now().isoformat(),
+        }
+    
+    except Exception as e:
+        logger.error(f"Initialization failed: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Initialization failed: {str(e)}")
+
+
+@router.get("/system/indexes")
+async def get_index_stats() -> Dict[str, Any]:
+    """Get MongoDB index statistics."""
+    try:
+        from mongo_index_manager import MongoIndexManager
+        
+        index_manager = MongoIndexManager(mongo_db)
+        return index_manager.get_index_stats()
+    
+    except Exception as e:
+        logger.error(f"Failed to get index stats: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# CRITICAL: This must come BEFORE /jobs/{job_id}
+@router.get("/jobs/summary")
+async def get_jobs_summary() -> Dict[str, Any]:
+    """Get a summary of all background jobs."""
+    try:
+        # Get background job manager from FastAPI routes instance
+        bg_manager = get_bg_job_manager()
+        # Return manual summary since get_job_summary doesn't exist yet
+        collection = bg_manager.jobs_collection
+        queued = collection.count_documents({"status": "queued"})
+        running = collection.count_documents({"status": "running"})
+        completed = collection.count_documents({"status": "completed"})
+        failed = collection.count_documents({"status": "failed"})
+        
+        return {
+            "queued": queued,
+            "running": running,
+            "completed": completed,
+            "failed": failed
+        }
+    except Exception as e:
+        # logger.error(f"Failed to get job summary: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 @router.get("/jobs/{job_id}")
 async def get_job_status(job_id: str):
     """
