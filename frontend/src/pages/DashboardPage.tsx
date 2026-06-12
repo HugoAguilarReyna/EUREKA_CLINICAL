@@ -99,6 +99,7 @@ export const DashboardPage = () => {
     const next = [...scenarios, newScenario];
     setScenarios(next);
     localStorage.setItem('eureka_scenarios', JSON.stringify(next));
+    setActiveTab(newScenario.id); // Switch to the newly saved scenario
   };
 
   const loadScenario = (scenario: Scenario) => {
@@ -252,7 +253,7 @@ export const DashboardPage = () => {
         </div>
 
         {/* ROW 3: SCENARIO LAB */}
-        <div style={{ height: 350, borderBottom: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ minHeight: 200, borderBottom: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, background: C.surface }}>
             <div 
               onClick={() => { setActiveTab('BASELINE'); setModifications(new Map()); }}
