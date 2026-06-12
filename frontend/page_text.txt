@@ -1,0 +1,113 @@
+EUREKA Multiverse
+
+CLINICAL DECISION INTELLIGENCE
+
+EXECUTIVE
+Executive Intelligence
+Assignment Recovery
+COHORT INTELLIGENCE
+Cohort Explorer
+Similarity Inspector
+Risk Propagation
+Pattern Timeline
+ANALYTICS
+Dashboard Overview
+Influence Explorer
+Explainability Explorer
+Traceability Explorer
+SEMANTIC LAYER (EDIOS)
+Data Prep Explorer
+Fuzzy Explorer
+Rule Explorer
+Explainability V2
+INVESTIGATION
+Graph Explorer
+Knowledge Copilot
+What-If Simulator
+Knowledge Ingestion
+Sprint 4.3. Connected to Decision Support Service.
+DECISION OS
+STATUS
+RED
+HEALTH
+5
+CRITICAL
+557
+PRIMARY
+Alkphos
+ACTION
+Evaluate Alkphos
+IMPACT
+0 pts
+CONFIDENCE
+84%
+21:55:20Z
+WHY IS THIS HAPPENING?
+PRIMARY DRIVER
+Alkphos
+IMPACT
+28%
+CONFIDENCE
+84%
+AFFECTED
+392
+TOP DRIVERS
+Alkphos
+28%
+ALB
+20%
+Sgot
+15%
+Sgpt
+13%
+DB
+12%
+DIGITAL TWIN WORKSPACE
+Alkphos
+0%
+ALB
+0%
+Sgot
+0%
+Sgpt
+0%
+DB
+0%
+CURRENT RISK
+557
+→
+PROJECTED RISK
+557
+→
+IMPROVEMENT
+0
+ACTION ENGINE
+TOP ACTION
+Evaluate Alkphos
+EXPECTED IMPACT
+0 pts
+CONFIDENCE
+84%
+ALTERNATIVES
+Evaluate ALB
+Impact: 304 pts
+Conf: 79%
+Evaluate Sgot
+Impact: 202 pts
+Conf: 90%
+Evaluate Sgpt
+Impact: 177 pts
+Conf: 91%
+LIVE SCENARIO
+SAVE SCENARIO
+COMPARE ALL
+Adjust sliders above to create a scenario, then click Save.
+DECISION EXPLAINABILITY
+WHY THIS ACTION?
+Because Alkphos explains 28% of the critical risk variance across the analyzed population.
+EVIDENCE
+392 patients are currently affected by RULE_1_Alkphos_ELEVATED.
+CONFIDENCE
+The engine predicts a 84% probability of achieving the projected 0 patient improvement.
+No historical telemetry available
+▶ SHOW SYSTEM AUDIT LOGS
