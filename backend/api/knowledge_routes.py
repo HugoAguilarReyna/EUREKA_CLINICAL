@@ -63,8 +63,14 @@ async def initialize_system() -> Dict[str, Any]:
     """Initialize the knowledge system at startup."""
     try:
         from backend.infrastructure.mongo_index_manager import MongoIndexManager
+        from pymongo import MongoClient
+        from backend.db.config import settings
+        from backend.graph.client import Neo4jClient
         
         logger.info("Initializing knowledge system...")
+        
+        mongo_client = MongoClient(settings.mongo_uri)
+        mongo_db = mongo_client[settings.mongo_db_name]
         
         # Create MongoDB indexes
         index_manager = MongoIndexManager(mongo_db)
@@ -73,7 +79,9 @@ async def initialize_system() -> Dict[str, Any]:
         
         # Verify Neo4j connection
         try:
-            neo4j_check = neo4j_session.run("RETURN 'Neo4j OK' AS status").single()
+            neo4j = Neo4jClient()
+            with neo4j.session() as session:
+                neo4j_check = session.run("RETURN 'Neo4j OK' AS status").single()
             neo4j_status = "connected"
         except Exception as e:
             logger.warning(f"Neo4j connection check failed: {e}")
@@ -105,6 +113,11 @@ async def get_index_stats() -> Dict[str, Any]:
     """Get MongoDB index statistics."""
     try:
         from backend.infrastructure.mongo_index_manager import MongoIndexManager
+        from pymongo import MongoClient
+        from backend.db.config import settings
+        
+        mongo_client = MongoClient(settings.mongo_uri)
+        mongo_db = mongo_client[settings.mongo_db_name]
         
         index_manager = MongoIndexManager(mongo_db)
         return index_manager.get_index_stats()
