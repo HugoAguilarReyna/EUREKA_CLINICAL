@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { PageContainer } from '../components/layout/PageContainer';
 import { useTraceability } from '../hooks';
 import { Search, GitBranch, ShieldAlert, FileText, Server } from 'lucide-react';
@@ -7,6 +8,20 @@ export const TraceabilityPage = () => {
   const [assetId, setAssetId] = useState<string>('Patient_5');
   const [queryId, setQueryId] = useState<string>('Patient_5');
   const { data, isLoading, error } = useTraceability(queryId);
+
+  const [casesList, setCasesList] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/cases?limit=1000`);
+        setCasesList(res.data || []);
+      } catch (err) {
+        console.error("Error fetching cases list", err);
+      }
+    };
+    fetchCases();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,15 +33,20 @@ export const TraceabilityPage = () => {
   return (
     <PageContainer title="Traceability Explorer">
       <div className="max-w-5xl mx-auto space-y-6">
-        <form onSubmit={handleSearch} className="flex gap-4">
-          <input 
-            type="text" 
-            value={assetId}
-            onChange={(e) => setAssetId(e.target.value)}
-            placeholder="Enter Patient ID (e.g. Patient_5) or Asset ID..."
-            className="flex-1 bg-surface/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
-          />
-          <button type="submit" className="bg-blue-500 hover:bg-blue-600 px-6 rounded-lg font-medium flex items-center gap-2 transition-colors text-white">
+        <form onSubmit={handleSearch} className="flex gap-4 items-center glassmorphism p-4 border border-white/5 rounded-xl">
+          <div className="flex-1">
+             <select 
+               value={assetId}
+               onChange={(e) => setAssetId(e.target.value)}
+               className="w-full bg-surface/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+             >
+                {casesList.length === 0 && <option value={assetId}>{assetId}</option>}
+                {casesList.map(c => (
+                  <option key={c.case_id} value={c.patient_id}>{c.patient_id}</option>
+                ))}
+             </select>
+          </div>
+          <button type="submit" className="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors text-white h-full">
             <Search size={18} />
             Trace
           </button>
