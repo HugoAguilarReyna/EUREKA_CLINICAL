@@ -34,14 +34,42 @@ export const AssignmentRecoveryDashboard = () => {
     fetchData();
   }, []);
 
+  const [progressMsg, setProgressMsg] = useState<string>("");
+  const [progressPct, setProgressPct] = useState<number>(0);
+
   const handleCertify = async () => {
     setCertifying(true);
+    setProgressMsg("Iniciando...");
+    setProgressPct(0);
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/knowledge/semantic/certify`);
-      setCertResult(res.data);
+      const jobId = res.data.job_id;
+      
+      // Poll job status
+      const poll = setInterval(async () => {
+        try {
+          const jobRes = await axios.get(`${import.meta.env.VITE_API_URL}/knowledge/jobs/${jobId}`);
+          const job = jobRes.data;
+          
+          if (job.progress_message) setProgressMsg(job.progress_message);
+          if (job.progress) setProgressPct(job.progress);
+          
+          if (job.status === "completed") {
+            clearInterval(poll);
+            setCertResult(job.result);
+            setCertifying(false);
+          } else if (job.status === "failed") {
+            clearInterval(poll);
+            console.error("Job failed:", job.error);
+            setCertifying(false);
+          }
+        } catch (err) {
+          console.error("Error polling job", err);
+        }
+      }, 1000);
+      
     } catch (err) {
       console.error("Certification failed", err);
-    } finally {
       setCertifying(false);
     }
   };
@@ -70,7 +98,7 @@ export const AssignmentRecoveryDashboard = () => {
             className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-800 text-white px-5 py-3 rounded-xl text-sm font-black font-mono tracking-wider transition-all shrink-0 flex items-center gap-2 shadow-lg shadow-emerald-500/10"
           >
             <ShieldCheck size={18} />
-            {certifying ? 'EJECUTANDO CERTIFICACIÓN...' : 'EJECUTAR CERTIFICACIÓN EDIOS'}
+            {certifying ? `EJECUTANDO... ${progressPct}% | ${progressMsg}` : 'EJECUTAR CERTIFICACIÓN EDIOS'}
           </button>
         </div>
 

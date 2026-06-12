@@ -1079,18 +1079,25 @@ async def get_node_provenance(node_id: str):
         raise HTTPException(status_code=404, detail=f"No provenance found for node {node_id}")
     return result
 
-@router.post("/semantic/certify")
-async def run_semantic_certification():
-    """
-    Runs full semantic integrity validator and generates certification artifacts.
-    """
+async def _do_semantic_certification(bg_manager, job_id):
     from backend.audit.semantic_intelligence_validator import SemanticIntelligenceValidator
+    import os
     validator = SemanticIntelligenceValidator()
     
     # Save reports in conversation's artifacts folder
     dest_dir = "C:\\Users\\aguil\\.gemini\\antigravity\\brain\\aaca331b-f567-4d86-badb-342963f3bffe"
     os.makedirs(dest_dir, exist_ok=True)
-    results = validator.generate_report(dest_dir)
+    results = validator.generate_report(dest_dir, bg_manager, job_id)
     return results
+
+@router.post("/semantic/certify")
+async def run_semantic_certification():
+    """
+    Schedules full semantic integrity validator and generates certification artifacts.
+    """
+    bg = get_bg_job_manager()
+    job_id = bg.create_job(job_type="semantic_certification", payload={})
+    bg.schedule_job(job_id, _do_semantic_certification(bg, job_id))
+    return {"success": True, "job_id": job_id, "status": "queued"}
 
 

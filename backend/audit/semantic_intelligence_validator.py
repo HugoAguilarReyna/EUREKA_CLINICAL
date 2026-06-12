@@ -21,24 +21,34 @@ class SemanticIntelligenceValidator:
         self.graph_builder = SemanticGraphBuilder()
         self.drift_validator = SemanticDriftValidator()
 
-    def audit_all(self) -> Dict[str, Any]:
+    def audit_all(self, bg_manager=None, job_id=None) -> Dict[str, Any]:
         results = {}
         
+        def update_progress(prog, msg):
+            if bg_manager and job_id:
+                bg_manager.update_job_progress(job_id, prog, msg)
+        
+        update_progress(10, "Auditing Membership Reproducibility...")
         # 1. Membership Reproducibility (100% Target)
         results["membership_reproducibility"] = self.audit_membership_reproducibility()
         
+        update_progress(30, "Auditing State Reconstruction...")
         # 2. State Reconstruction (100% Target)
         results["state_reconstruction"] = self.audit_state_reconstruction()
         
+        update_progress(50, "Auditing Rule Reconstruction...")
         # 3. Rule Reconstruction (100% Target)
         results["rule_reconstruction"] = self.audit_rule_reconstruction()
         
+        update_progress(70, "Auditing Graph Integrity...")
         # 4. Graph Integrity (100% Target)
         results["graph_integrity"] = self.audit_graph_integrity()
         
+        update_progress(85, "Auditing Explainability Chain...")
         # 5. Explainability Chain Integrity (100% Target)
         results["explainability_chain_integrity"] = self.audit_explainability_chain_integrity()
         
+        update_progress(95, "Auditing Semantic Drift...")
         # 6. Semantic Drift Accuracy (>= 90% Target)
         results["drift_detection_accuracy"] = self.audit_drift_detection_accuracy()
         
@@ -55,6 +65,7 @@ class SemanticIntelligenceValidator:
         results["passed"] = all_passed
         results["timestamp"] = datetime.datetime.utcnow().isoformat()
         
+        update_progress(100, "Certification Complete.")
         return results
 
     def audit_membership_reproducibility(self) -> Dict[str, Any]:
@@ -214,8 +225,8 @@ class SemanticIntelligenceValidator:
             "status": drift_results["status"]
         }
 
-    def generate_report(self, dest_dir: str):
-        results = self.audit_all()
+    def generate_report(self, dest_dir: str, bg_manager=None, job_id=None):
+        results = self.audit_all(bg_manager, job_id)
         
         # Write JSON payload
         json_path = os.path.join(dest_dir, "semantic_intelligence_certification.json")
