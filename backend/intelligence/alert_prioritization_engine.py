@@ -3,108 +3,86 @@ from backend.intelligence.executive_cache import ExecutiveKnowledgeCache
 
 class AlertPrioritizationEngine:
     """
-    Ranks alerts based on PriorityScore = Impact * Confidence * Population * Severity.
-    Extracts alerts from Rules, Risks, and Insights cached in the ExecutiveKnowledgeCache.
+    Ranks alerts based on PriorityScore (ROI) = Expected Risk Reduction (Active Support) * Confidence.
+    Extracts alerts from Rules using Epic 11.1A Ground Truth Validation.
     """
     def __init__(self):
         self.cache = ExecutiveKnowledgeCache()
 
     def get_top_alerts(self, limit: int = 5) -> List[Dict[str, Any]]:
         """
-        Returns the top N prioritized alerts.
+        Returns the top N prioritized actions/alerts.
         """
         knowledge = self.cache.get_knowledge()
         rules = knowledge.get("rules", [])
-        insights = knowledge.get("insights", [])
-        cases = knowledge.get("cases", [])
-        total_population = len(cases) if cases else 1
+        edges = knowledge.get("edges", [])
         
         alerts = []
         
-        # We can extract alerts from Rules (e.g. High risk rules)
-        for r in rules:
-            props = r.get("properties", {})
-            confidence = props.get("confidence", 0.0)
-            support = props.get("support", 0.0) # Population fraction
-            
-            # Estimate severity based on target class (e.g., RISK_HIGH = 1.0, RISK_MEDIUM = 0.5)
-            # Find the risk node this rule points to
-            rule_id = r.get("id")
-            risk_edges = [e for e in knowledge.get("edges", []) if e.get("src_id") == rule_id and e.get("relationship_type") == "INDICATES"]
-            
-            severity = 0.5
-            target_class = "Unknown"
-            if risk_edges:
-                risk_node_id = risk_edges[0].get("dst_id")
-                risk_node = next((n for n in knowledge.get("risks", []) if n.get("id") == risk_node_id), None)
-                if risk_node:
-                    risk_level = str(risk_node.get("properties", {}).get("risk_level", "")).upper()
-                    target_class = risk_level
-                    if risk_level == "HIGH": severity = 1.0
-                    elif risk_level == "MEDIUM": severity = 0.7
-                    elif risk_level == "LOW": severity = 0.3
-            
-            # Centrality as a proxy for impact
-            centrality = knowledge.get("centralities", {}).get(rule_id, {}).get("eigenvector", 0.1)
-            impact = centrality * 10  # Scale up
-            
-            # Calculate score
-            # PriorityScore = Impact x Confidence x Population x Severity
-            priority_score = impact * confidence * support * severity
-            
-            # Extract clinical variable drivers from the rule expression
+        for rule in rules:
+            rid = rule.get("id")
+            props = rule.get("properties", {})
             expr = props.get("expression", "")
             
-            if priority_score > 0:
-                alerts.append({
-                    "id": rule_id,
-                    "title": f"High Risk Clinical Pattern Detected",
-                    "description": f"Condition: {expr} indicates {target_class} risk.",
-                    "priority_score": round(priority_score, 4),
-                    "impact": round(impact, 4),
-                    "confidence": round(confidence, 4),
-                    "population_affected": int(support * total_population),
-                    "severity": severity,
-                    "source": "RuleEngine"
-                })
-                
-        # Also process Insights that might be flagged as critical
-        for i in insights:
-            props = i.get("properties", {})
-            if "odds_ratio" in props:
-                # Evidence node
-                strength = str(props.get("strength", "MEDIUM")).upper()
-                sev = 1.0 if strength == "STRONG" else (0.7 if strength == "MEDIUM" else 0.3)
-                conf = props.get("confidence", 0.8)
-                supp = props.get("support", 0.1)
-                
-                # proxy impact
-                impact = 0.5
-                priority_score = impact * conf * supp * sev
-                
-                alerts.append({
-                    "id": i.get("id"),
-                    "title": i.get("properties", {}).get("name", "Insight"),
-                    "description": f"Statistical evidence with Odds Ratio {props.get('odds_ratio')}",
-                    "priority_score": round(priority_score, 4),
-                    "impact": round(impact, 4),
-                    "confidence": round(conf, 4),
-                    "population_affected": int(supp * total_population),
-                    "severity": sev,
-                    "source": "InsightEngine"
-                })
-
-        # Sort by priority score descending
+            if " IF " in f" {expr} " and " THEN " in expr:
+                condition = expr.split(" THEN ")[0].replace("IF ", "").strip()
+                if " = " in condition:
+                    var_name, state_val = condition.split(" = ")
+                    var_name = var_name.strip()
+                    state_id = f"STATE_{var_name}_{state_val.strip()}"
+                    
+                    # Calculate Active Support
+                    active_support = len(set([e.get("src_id") for e in edges if e.get("dst_id") == state_id and e.get("relationship_type") == "HAS_STATE"]))
+                    
+                    confidence = props.get("confidence", 0.0)
+                    
+                    # Risk Reduction Expected is proportional to active support (assuming intervention works)
+                    roi_score = active_support * confidence
+                    
+                    # Estimate severity
+                    risk_edges = [e for e in edges if e.get("src_id") == rid and e.get("relationship_type") == "INDICATES"]
+                    severity = 0.5
+                    target_class = "Unknown"
+                    if risk_edges:
+                        risk_node_id = risk_edges[0].get("dst_id")
+                        risk_node = next((n for n in knowledge.get("risks", []) if n.get("id") == risk_node_id), None)
+                        if risk_node:
+                            risk_level = str(risk_node.get("properties", {}).get("risk_level", "")).upper()
+                            target_class = risk_level
+                            if risk_level == "HIGH": severity = 1.0
+                            elif risk_level == "MEDIUM": severity = 0.7
+                            elif risk_level == "LOW": severity = 0.3
+                    
+                    if roi_score > 0:
+                        alerts.append({
+                            "id": rid,
+                            "title": f"Evaluate {var_name}",
+                            "description": f"Targeting {state_val} {var_name} could mitigate {target_class} risk.",
+                            "priority_score": round(roi_score, 2),
+                            "confidence": round(confidence, 4),
+                            "population_affected": active_support,
+                            "severity": severity,
+                            "source": "RuleEngine",
+                            "ground_truth_audit": {
+                                "value": round(roi_score, 2),
+                                "source_rule": rid,
+                                "support": active_support,
+                                "confidence": confidence,
+                                "community_count": 1,
+                                "calculation_version": "v2_math_rework"
+                            }
+                        })
+                        
         alerts.sort(key=lambda x: x["priority_score"], reverse=True)
         
-        # Deduplicate by title/description heuristically
+        # Deduplicate
         unique_alerts = []
         seen = set()
         for a in alerts:
-            if a["description"] not in seen:
-                seen.add(a["description"])
+            if a["title"] not in seen:
+                seen.add(a["title"])
                 unique_alerts.append(a)
-                if len(unique_alerts) >= limit:
+                if len(unique_alerts) == limit:
                     break
                     
         return unique_alerts

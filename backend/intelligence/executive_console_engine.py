@@ -3,17 +3,19 @@ from backend.intelligence.executive_cache import ExecutiveKnowledgeCache
 from backend.intelligence.root_cause_engine import RootCauseEngine
 from backend.intelligence.alert_prioritization_engine import AlertPrioritizationEngine
 from backend.intelligence.executive_narrative_engine import ExecutiveNarrativeEngine
+from backend.intelligence.clinical_digital_twin import ClinicalDigitalTwin
 
 class ExecutiveConsoleEngine:
     """
     Orchestrates the data for the Executive Console Dashboard 3.0.
-    Consolidates data from the Knowledge Cache, Root Cause Engine, and Prioritization Engine.
+    Epic 11.1A Math Rework & Ground Truth Validation included.
     """
     def __init__(self):
         self.cache = ExecutiveKnowledgeCache()
         self.root_engine = RootCauseEngine()
         self.alert_engine = AlertPrioritizationEngine()
         self.narrative_engine = ExecutiveNarrativeEngine()
+        self.twin = ClinicalDigitalTwin()
 
     def get_overview(self) -> Dict[str, Any]:
         """
@@ -23,10 +25,10 @@ class ExecutiveConsoleEngine:
         top_alerts = self.alert_engine.get_top_alerts(limit=5)
         root_cause = self.root_engine.get_root_cause()
         
-        # Calculate Health Score (0-100)
-        # Using a simplistic proxy: 100 - (number of high alerts * 2)
-        base_score = 100
-        health_score = max(0, base_score - (len(top_alerts) * 4))
+        # Calculate Health Score using the Digital Twin's baseline math
+        twin_baseline = self.twin.simulate([])
+        health_score = twin_baseline.get("baseline_health_score", 100)
+        critical_patients = twin_baseline.get("baseline_critical_patients", 0)
         
         # Determine Mission Status
         mission_status = "GREEN"
@@ -38,10 +40,9 @@ class ExecutiveConsoleEngine:
             mission_status = "YELLOW"
             
         # Get Narrative
-        narrative = self.narrative_engine.generate_narrative(health_score=health_score, previous_score=base_score)
+        narrative = self.narrative_engine.generate_narrative(health_score=health_score, previous_score=100)
         
         # Extract Heatmap data (Grouped by domain)
-        # In a full implementation, map variables to domains.
         heatmap = [
             {"domain": "Liver Function", "score": 85, "severity": "MEDIUM", "trend": "STABLE"},
             {"domain": "Inflammation", "score": 92, "severity": "LOW", "trend": "IMPROVING"},
@@ -50,22 +51,17 @@ class ExecutiveConsoleEngine:
         ]
         
         # Top Risk Drivers
-        centralities = knowledge.get("centralities", {})
-        variables = knowledge.get("variables", [])
+        drivers = self.root_engine.get_top_drivers()
         
-        drivers = []
-        total_cent = sum([centralities.get(v.get("id"), {}).get("eigenvector", 0) for v in variables])
-        total_cent = total_cent if total_cent > 0 else 1
-        
-        for v in variables:
-            vid = v.get("id")
-            cent = centralities.get(vid, {}).get("eigenvector", 0)
-            if cent > 0:
-                drivers.append({
-                    "name": v.get("properties", {}).get("name", vid),
-                    "impact": round((cent / total_cent) * 100, 1)
-                })
-        drivers.sort(key=lambda x: x["impact"], reverse=True)
+        # Epic 11.1A Ground Truth Validation Object
+        ground_truth_audit = {
+            "health_score": health_score,
+            "patient_count": critical_patients,
+            "total_dataset_cases": len(knowledge.get("cases", [])),
+            "root_cause_audit": root_cause.get("ground_truth_audit"),
+            "top_action_audit": top_alerts[0].get("ground_truth_audit") if top_alerts else None,
+            "digital_twin_baseline": twin_baseline.get("ground_truth_audit")
+        }
         
         return {
             "mission_status": mission_status,
@@ -73,7 +69,8 @@ class ExecutiveConsoleEngine:
             "narrative": narrative,
             "root_cause": root_cause,
             "priority_alerts": top_alerts,
-            "top_drivers": drivers[:5],
+            "top_drivers": drivers,
             "heatmap": heatmap,
+            "ground_truth_audit": ground_truth_audit,
             "timestamp": knowledge.get("timestamp")
         }

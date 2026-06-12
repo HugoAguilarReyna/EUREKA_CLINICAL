@@ -12,85 +12,145 @@ class RootCauseEngine:
     def get_root_cause(self) -> Dict[str, Any]:
         """
         Calculates and returns the primary root cause driving the current risk.
-        Returns:
-        {
-          "driver": "Bilirrubina",
-          "impact": 22, # percentage
-          "confidence": 0.91,
-          "affected_patients": 144
-        }
+        Uses Epic 11.1A Math Rework:
+        ImpactScore = ActiveSupport * Confidence * Lift * CommunityCoverage
         """
         knowledge = self.cache.get_knowledge()
-        variables = knowledge.get("variables", [])
-        centralities = knowledge.get("centralities", {})
+        rules = knowledge.get("rules", [])
         edges = knowledge.get("edges", [])
         cases = knowledge.get("cases", [])
-        total_patients = len(cases) if cases else 1
         
-        if not variables:
+        if not rules:
             return {
                 "driver": "Unknown",
                 "impact": 0,
                 "confidence": 0.0,
-                "affected_patients": 0
+                "affected_patients": 0,
+                "ground_truth_audit": None
             }
             
-        # Find the variable with the highest eigenvector centrality
-        top_var = None
-        max_cent = -1
+        variable_impacts = {}
+        variable_audits = {}
+        total_impact = 0.0
         
-        # Calculate total centrality for percentage normalization
-        total_cent = sum([centralities.get(v.get("id"), {}).get("eigenvector", 0) for v in variables])
-        if total_cent == 0: total_cent = 1 # prevent div/0
-        
-        for v in variables:
-            vid = v.get("id")
-            cent = centralities.get(vid, {}).get("eigenvector", 0)
-            if cent > max_cent:
-                max_cent = cent
-                top_var = v
-                
-        if not top_var:
-            return {
-                "driver": "Unknown",
-                "impact": 0,
-                "confidence": 0.0,
-                "affected_patients": 0
-            }
-            
-        driver_name = top_var.get("properties", {}).get("name", "Unknown")
-        
-        # Calculate impact as percentage of total variable centrality
-        impact_pct = int((max_cent / total_cent) * 100)
-        
-        # Confidence derived from related rules' average confidence
-        # Find rules connected to this variable via ACTIVATES_STATE -> PROPOSES_RULE etc.
-        # Simplification: Find HAS_VALUE edges to this variable to count affected patients
-        vid = top_var.get("id")
-        affected_patients = len(set([e.get("src_id") for e in edges if e.get("dst_id") == vid and e.get("relationship_type") == "HAS_VALUE"]))
-        
-        # Look for states of this variable
-        state_ids = [e.get("dst_id") for e in edges if e.get("src_id") == vid and e.get("relationship_type") == "ACTIVATES_STATE"]
-        
-        # Find rules activated by these states
-        rule_ids = set()
-        for sid in state_ids:
-            for e in edges:
-                if e.get("src_id") == sid and e.get("relationship_type") == "TRIGGERS_RULE":
-                    rule_ids.add(e.get("dst_id"))
+        for rule in rules:
+            rid = rule.get("id")
+            props = rule.get("properties", {})
+            expr = props.get("expression", "")
+            # Example expr: "IF Total Bilirubin = HIGH THEN Liver Disease Risk = HIGH"
+            if " IF " in f" {expr} " and " THEN " in expr:
+                condition = expr.split(" THEN ")[0].replace("IF ", "").strip()
+                if " = " in condition:
+                    var_name, state_val = condition.split(" = ")
+                    var_name = var_name.strip()
+                    state_val = state_val.strip()
                     
-        confidence = 0.0
-        if rule_ids:
-            rules = [r for r in knowledge.get("rules", []) if r.get("id") in rule_ids]
-            if rules:
-                confidence = sum([r.get("properties", {}).get("confidence", 0) for r in rules]) / len(rules)
-                
-        if confidence == 0:
-            confidence = 0.85 # Base high confidence for graph-derived metrics if rules are sparse
+                    state_id = f"STATE_{var_name}_{state_val}"
+                    
+                    # 1. Active Support: How many patients currently have this state?
+                    active_support = len(set([e.get("src_id") for e in edges if e.get("dst_id") == state_id and e.get("relationship_type") == "HAS_STATE"]))
+                    
+                    # 2. Confidence and Lift
+                    conf = props.get("confidence", 0.5)
+                    lift = props.get("lift", 1.0)
+                    
+                    # 3. Community Coverage: How many communities are characterized by this state?
+                    communities = len(set([e.get("src_id") for e in edges if e.get("dst_id") == state_id and e.get("relationship_type") == "CHARACTERIZED_BY"]))
+                    if communities == 0: communities = 1 # At least 1 if active
+                    
+                    # 4. Impact Score Calculation
+                    impact_score = active_support * conf * lift * communities
+                    
+                    if var_name not in variable_impacts:
+                        variable_impacts[var_name] = 0.0
+                        variable_audits[var_name] = {
+                            "value": 0.0,
+                            "source_rule": rid,
+                            "support": active_support,
+                            "confidence": conf,
+                            "lift": lift,
+                            "community_count": communities,
+                            "calculation_version": "v2_math_rework"
+                        }
+                        
+                    variable_impacts[var_name] += impact_score
+                    total_impact += impact_score
+                    
+                    # Keep track of the max support rule for audit
+                    if impact_score > variable_audits[var_name]["value"]:
+                        variable_audits[var_name]["value"] = impact_score
+                        variable_audits[var_name]["source_rule"] = rid
+                        variable_audits[var_name]["support"] = active_support
+                        variable_audits[var_name]["confidence"] = conf
+                        variable_audits[var_name]["lift"] = lift
+                        variable_audits[var_name]["community_count"] = communities
+
+        if not variable_impacts or total_impact == 0:
+            return {
+                "driver": "Unknown",
+                "impact": 0,
+                "confidence": 0.0,
+                "affected_patients": 0,
+                "ground_truth_audit": None
+            }
             
+        # Find the top driver
+        top_driver = max(variable_impacts, key=variable_impacts.get)
+        top_impact = variable_impacts[top_driver]
+        
+        audit = variable_audits[top_driver]
+        impact_pct = int((top_impact / total_impact) * 100) if total_impact > 0 else 0
+        
         return {
-            "driver": driver_name,
+            "driver": top_driver,
             "impact": impact_pct,
-            "confidence": round(confidence, 2),
-            "affected_patients": affected_patients
+            "confidence": round(audit["confidence"], 2),
+            "affected_patients": audit["support"],
+            "ground_truth_audit": audit
         }
+
+    def get_top_drivers(self) -> list:
+        # Reusing the same math to return top 5 drivers
+        knowledge = self.cache.get_knowledge()
+        rules = knowledge.get("rules", [])
+        edges = knowledge.get("edges", [])
+        
+        variable_impacts = {}
+        variable_audits = {}
+        total_impact = 0.0
+        
+        for rule in rules:
+            rid = rule.get("id")
+            props = rule.get("properties", {})
+            expr = props.get("expression", "")
+            if " IF " in f" {expr} " and " THEN " in expr:
+                condition = expr.split(" THEN ")[0].replace("IF ", "").strip()
+                if " = " in condition:
+                    var_name, state_val = condition.split(" = ")
+                    var_name = var_name.strip()
+                    state_id = f"STATE_{var_name}_{state_val.strip()}"
+                    
+                    active_support = len(set([e.get("src_id") for e in edges if e.get("dst_id") == state_id and e.get("relationship_type") == "HAS_STATE"]))
+                    conf = props.get("confidence", 0.5)
+                    lift = props.get("lift", 1.0)
+                    communities = len(set([e.get("src_id") for e in edges if e.get("dst_id") == state_id and e.get("relationship_type") == "CHARACTERIZED_BY"]))
+                    if communities == 0: communities = 1
+                    
+                    impact_score = active_support * conf * lift * communities
+                    
+                    if var_name not in variable_impacts:
+                        variable_impacts[var_name] = 0.0
+                    variable_impacts[var_name] += impact_score
+                    total_impact += impact_score
+
+        drivers = []
+        for var_name, impact in variable_impacts.items():
+            impact_pct = int((impact / total_impact) * 100) if total_impact > 0 else 0
+            drivers.append({
+                "name": var_name,
+                "impact": impact_pct
+            })
+            
+        # Sort by impact descending
+        drivers = sorted(drivers, key=lambda x: x["impact"], reverse=True)
+        return drivers[:5]
