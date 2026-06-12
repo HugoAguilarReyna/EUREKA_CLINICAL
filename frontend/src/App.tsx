@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { ExecutiveIntelligencePage } from './pages/ExecutiveIntelligencePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ExecutiveConsolePage } from './pages/ExecutiveConsolePage';
+import DecisionOSPage from './pages/DecisionOSPage';
 import { KnowledgeGraphPage } from './pages/KnowledgeGraphPage';
 import { ExplainabilityPage } from './pages/ExplainabilityPage';
 import { TraceabilityPage } from './pages/TraceabilityPage';
