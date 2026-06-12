@@ -128,16 +128,8 @@ class GraphAbstractionEngine:
             matched_node_ids = {n["id"] for n in matched_nodes}
             matched_edges = [e for e in edges if e["src_id"] in matched_node_ids and e["dst_id"] in matched_node_ids]
             
-            # Global Hard Limits check
-            if len(matched_nodes) > MAX_NODES or len(matched_edges) > MAX_EDGES:
-                return {
-                    "nodes": [],
-                    "edges": [],
-                    "warning": True,
-                    "message": "Graph exceeds rendering threshold."
-                }
-                
             # Apply scope limit
+
             matched_nodes = matched_nodes[:scope_limit]
             matched_node_ids = {n["id"] for n in matched_nodes}
             matched_edges = [e for e in edges if e["src_id"] in matched_node_ids and e["dst_id"] in matched_node_ids]
