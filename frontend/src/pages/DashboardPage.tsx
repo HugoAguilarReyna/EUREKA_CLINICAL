@@ -196,7 +196,14 @@ export const DashboardPage = () => {
             <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>PRIMARY</span><span style={{color:C.warning}}>{DRIVER}</span></div>
             <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>ACTION</span><span style={{color:C.accent}}>{BACTION}</span></div>
             <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>IMPACT</span><span style={{color: IS_IMPROVED ? C.success : C.critical}}>{DELTA} pts</span></div>
-            <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>CONFIDENCE</span><span>{simResults ? Math.round(simResults.confidence*100) : Math.round(BALERT?.confidence*100)}%</span></div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <span style={{color:C.muted}}>CONFIDENCE</span>
+              <span>
+                {typeof (simResults?.confidence ?? BALERT?.confidence) === 'number' 
+                  ? `${Math.round((simResults?.confidence ?? BALERT?.confidence) * 100)}%` 
+                  : '—'}
+              </span>
+            </div>
           </div>
           <div style={{ color: C.dim, fontFamily: FONT_MONO }}>{UPDATED}</div>
         </div>
@@ -307,15 +314,20 @@ export const DashboardPage = () => {
             {auditOpen ? '▼ HIDE AUDIT LOGS' : '▶ SHOW SYSTEM AUDIT LOGS'}
           </div>
           {auditOpen && (
-            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ padding: 12, background: C.surfaceHover, fontFamily: FONT_MONO, fontSize: '0.75rem', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 4 }}>
-                [SYS] {fmtTs(ov.timestamp)} - Baseline loaded. Cases: {PATIENTS}
-              </div>
+            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
               {auditLogs.map(log => (
-                <div key={log.id} style={{ padding: 12, background: C.surface, fontFamily: FONT_MONO, fontSize: '0.75rem', color: C.dim, border: `1px solid ${C.border}`, borderRadius: 4 }}>
-                  [{fmtTs(Date.parse(log.timestamp)/1000)}] SIM_EVENT - {log.variable} → Projected: {log.projected} (Delta: {log.delta})
+                <div key={log.id} style={{ display: 'flex', flexDirection: 'column', padding: '1rem', background: C.surfaceHover, borderLeft: `2px solid ${C.accent}`, borderRadius: '0 4px 4px 0' }}>
+                  <div style={{ fontSize: '0.85rem', color: C.textPrimary, fontWeight: 600, marginBottom: '0.5rem' }}>{fmtTs(Date.parse(log.timestamp)/1000)}</div>
+                  <div style={{ fontSize: '1rem', color: C.textPrimary, marginBottom: '0.5rem' }}>Simulation Executed</div>
+                  <div style={{ fontSize: '0.85rem', color: C.textMuted, marginBottom: '0.25rem' }}>Variables: <span style={{color:C.warning}}>{log.variable}</span></div>
+                  <div style={{ fontSize: '0.85rem', color: C.textMuted }}>Outcome: <span style={{color: log.delta <= 0 ? C.success : C.critical}}>{Math.abs(log.delta)} patients improved</span></div>
                 </div>
               ))}
+              <div style={{ display: 'flex', flexDirection: 'column', padding: '1rem', background: C.surface, borderLeft: `2px solid ${C.border}`, borderRadius: '0 4px 4px 0' }}>
+                <div style={{ fontSize: '0.85rem', color: C.textPrimary, fontWeight: 600, marginBottom: '0.5rem' }}>{fmtTs(ov.timestamp)}</div>
+                <div style={{ fontSize: '1rem', color: C.textPrimary, marginBottom: '0.5rem' }}>Baseline Loaded</div>
+                <div style={{ fontSize: '0.85rem', color: C.textMuted }}>Cases: {PATIENTS}</div>
+              </div>
             </div>
           )}
         </div>
