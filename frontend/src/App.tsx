@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ExecutiveIntelligencePage } from './pages/ExecutiveIntelligencePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ExecutiveConsolePage } from './pages/ExecutiveConsolePage';
@@ -23,7 +23,7 @@ import { PatternTimelineExplorer } from './pages/PatternTimelineExplorer';
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<ExecutiveIntelligencePage />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/executive-console" element={<ExecutiveConsolePage />} />
       <Route path="/decision-os" element={<DecisionOSPage />} />
