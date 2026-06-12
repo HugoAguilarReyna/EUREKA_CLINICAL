@@ -38,7 +38,7 @@ class AlertPrioritizationEngine:
                 risk_node_id = risk_edges[0].get("dst_id")
                 risk_node = next((n for n in knowledge.get("risks", []) if n.get("id") == risk_node_id), None)
                 if risk_node:
-                    risk_level = risk_node.get("properties", {}).get("risk_level", "").upper()
+                    risk_level = str(risk_node.get("properties", {}).get("risk_level", "")).upper()
                     target_class = risk_level
                     if risk_level == "HIGH": severity = 1.0
                     elif risk_level == "MEDIUM": severity = 0.7
@@ -73,7 +73,7 @@ class AlertPrioritizationEngine:
             props = i.get("properties", {})
             if "odds_ratio" in props:
                 # Evidence node
-                strength = props.get("strength", "MEDIUM").upper()
+                strength = str(props.get("strength", "MEDIUM")).upper()
                 sev = 1.0 if strength == "STRONG" else (0.7 if strength == "MEDIUM" else 0.3)
                 conf = props.get("confidence", 0.8)
                 supp = props.get("support", 0.1)
