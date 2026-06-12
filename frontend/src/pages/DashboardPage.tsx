@@ -174,7 +174,7 @@ export const DashboardPage = () => {
       <div className="mb-12">
         <h2 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-2">6. Recommended Actions (Prioritized)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {findings.map((f: any, idx: number) => (
+          {(latest?.recommendations || []).map((f: any, idx: number) => (
             <div key={idx} className="bg-blue-950/10 border border-blue-500/20 p-5 rounded-xl hover:bg-blue-900/20 transition-colors">
               <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded inline-block mb-3 ${
                 f.severity === 'CRITICAL' ? 'bg-red-500/20 text-red-400' : 
