@@ -16,12 +16,6 @@ export const PageContainer = ({ children, title }: { children: ReactNode; title:
         
         <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 z-10 bg-surface/30 backdrop-blur-md">
           <h2 className="text-lg font-medium text-gray-200 tracking-wide">{title}</h2>
-          <button 
-            onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-white/10 transition-colors"
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
         </header>
         
         <div className="flex-1 overflow-auto p-8 z-10">
