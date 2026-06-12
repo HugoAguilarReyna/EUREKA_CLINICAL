@@ -62,7 +62,7 @@ def get_bg_job_manager():
 async def initialize_system() -> Dict[str, Any]:
     """Initialize the knowledge system at startup."""
     try:
-        from mongo_index_manager import MongoIndexManager
+        from backend.infrastructure.mongo_index_manager import MongoIndexManager
         
         logger.info("Initializing knowledge system...")
         
@@ -104,7 +104,7 @@ async def initialize_system() -> Dict[str, Any]:
 async def get_index_stats() -> Dict[str, Any]:
     """Get MongoDB index statistics."""
     try:
-        from mongo_index_manager import MongoIndexManager
+        from backend.infrastructure.mongo_index_manager import MongoIndexManager
         
         index_manager = MongoIndexManager(mongo_db)
         return index_manager.get_index_stats()
