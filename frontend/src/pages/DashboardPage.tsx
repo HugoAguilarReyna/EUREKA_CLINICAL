@@ -55,6 +55,15 @@ export const DashboardPage = () => {
     }
   }, []);
 
+  // Initialize with a default simulation (-20% on primary driver) so the page has data
+  useEffect(() => {
+    if (ov?.root_cause?.driver && modifications.size === 0 && !simResults && !simLoading) {
+      const initialMap = new Map<string, number>();
+      initialMap.set(ov.root_cause.driver, -20);
+      setModifications(initialMap);
+    }
+  }, [ov, modifications.size, simResults, simLoading]);
+
   // Debounced Simulation
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
