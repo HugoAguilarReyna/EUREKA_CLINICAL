@@ -37,7 +37,7 @@ class MongoIndexManager:
             results["dataset_history"] = res
 
             # 3. semantic_graph_nodes
-            res1 = self.db.semantic_graph_nodes.create_index([("id", ASCENDING)], background=True)
+            res1 = self.db.semantic_graph_nodes.create_index([("id", ASCENDING)], background=True, unique=True)
             res2 = self.db.semantic_graph_nodes.create_index([("label", ASCENDING)], background=True)
             res3 = self.db.semantic_graph_nodes.create_index([("type", ASCENDING)], background=True)
             results["semantic_graph_nodes"] = [res1, res2, res3]
