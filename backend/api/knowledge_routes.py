@@ -1202,14 +1202,19 @@ async def get_node_provenance(node_id: str):
     return result
 
 async def _do_semantic_certification(bg_manager, job_id):
-    from backend.audit.semantic_intelligence_validator import SemanticIntelligenceValidator
-    import os
-    validator = SemanticIntelligenceValidator()
+    import asyncio
     
-    # Save reports in conversation's artifacts folder
-    dest_dir = "C:\\Users\\aguil\\.gemini\\antigravity\\brain\\aaca331b-f567-4d86-badb-342963f3bffe"
-    os.makedirs(dest_dir, exist_ok=True)
-    results = validator.generate_report(dest_dir, bg_manager, job_id)
+    def _run_sync():
+        from backend.audit.semantic_intelligence_validator import SemanticIntelligenceValidator
+        import os
+        validator = SemanticIntelligenceValidator()
+        
+        # Save reports in conversation's artifacts folder
+        dest_dir = "C:\\Users\\aguil\\.gemini\\antigravity\\brain\\aaca331b-f567-4d86-badb-342963f3bffe"
+        os.makedirs(dest_dir, exist_ok=True)
+        return validator.generate_report(dest_dir, bg_manager, job_id)
+        
+    results = await asyncio.to_thread(_run_sync)
     return results
 
 @router.post("/semantic/certify")
