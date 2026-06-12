@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
+import { TwinWorkbench } from '../components/twin-simulator/TwinWorkbench';
 
 const API = import.meta.env.VITE_API_URL || 'https://eureka-backend-vedn.onrender.com';
 
@@ -91,6 +92,7 @@ export const DashboardPage = () => {
   const [sim, setSim]           = useState<SimResult|null>(null);
   const [auditOpen, setAudit]   = useState(false);
   const [activeTab, setTab]     = useState<'HEALTH'|'POP'|'RULE'>('HEALTH');
+  const [showTwinWorkbench, setShowTwinWorkbench] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -182,7 +184,7 @@ export const DashboardPage = () => {
                 PATIENTS IMPROVED
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 48 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 48, marginBottom: 32 }}>
                 <div style={{ fontSize: '2.5rem', fontWeight: 500, color: C.muted }}>
                   <span style={{ color: C.text }}>{OUT_CURRENT}</span>
                   <span style={{ margin: '0 16px', color: C.dim }}>→</span>
@@ -194,6 +196,17 @@ export const DashboardPage = () => {
                   <div style={{ fontSize: '1rem', fontWeight: 400, color: C.muted }}>{BCONF} Confidence</div>
                 </div>
               </div>
+
+              <button 
+                onClick={() => setShowTwinWorkbench(true)}
+                style={{ 
+                  background: C.surface, border: `1px solid ${C.accent}`, color: C.accent,
+                  padding: '12px 24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem',
+                  letterSpacing: '0.1em', boxShadow: C.shadowSm
+                }}
+              >
+                OPEN DIGITAL TWIN
+              </button>
             </div>
           </div>
 
@@ -407,6 +420,12 @@ export const DashboardPage = () => {
 
         </div>
       </div>
+      {showTwinWorkbench && ov && (
+        <TwinWorkbench 
+          baselineData={ov as any} 
+          onClose={() => setShowTwinWorkbench(false)} 
+        />
+      )}
     </PageContainer>
   );
 };
