@@ -29,6 +29,8 @@ export const DashboardPage = () => {
   
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [activeTab, setActiveTab] = useState<string>('BASELINE');
+  const [compareMode, setCompareMode] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [auditOpen, setAuditOpen] = useState(false);
 
   // Fetch initial data
@@ -47,11 +49,15 @@ export const DashboardPage = () => {
     })();
   }, []);
 
-  // Load scenarios from LocalStorage
+  // Load scenarios and audit logs from LocalStorage
   useEffect(() => {
-    const saved = localStorage.getItem('eureka_scenarios');
-    if (saved) {
-      try { setScenarios(JSON.parse(saved)); } catch (e) {}
+    const savedScenarios = localStorage.getItem('eureka_scenarios');
+    if (savedScenarios) {
+      try { setScenarios(JSON.parse(savedScenarios)); } catch (e) {}
+    }
+    const savedAudit = localStorage.getItem('eureka_audit_trail');
+    if (savedAudit) {
+      try { setAuditLogs(JSON.parse(savedAudit)); } catch (e) {}
     }
   }, []);
 
@@ -74,7 +80,22 @@ export const DashboardPage = () => {
         .map(([variable, change_pct]) => ({ variable, change_pct }));
       
       if (mods.length > 0) {
-        simulate(mods).catch(() => {});
+        simulate(mods).then((res) => {
+          setAuditLogs(prev => {
+            const newLog = {
+              id: crypto.randomUUID(),
+              timestamp: new Date().toISOString(),
+              variable: mods.map(m => `${m.variable} (${m.change_pct}%)`).join(', '),
+              change_pct: mods[0]?.change_pct || 0,
+              baseline: res.baseline_critical_patients,
+              projected: res.projected_critical_patients,
+              delta: res.critical_patients_delta
+            };
+            const next = [newLog, ...prev].slice(0, 20);
+            localStorage.setItem('eureka_audit_trail', JSON.stringify(next));
+            return next;
+          });
+        }).catch(() => {});
       }
     }, 300);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
@@ -116,6 +137,27 @@ export const DashboardPage = () => {
     scenario.modifications.forEach(m => newMap.set(m.variable, m.change_pct));
     setModifications(newMap);
     setActiveTab(scenario.id);
+    setCompareMode(false);
+  };
+
+  const deleteScenario = (id: string) => {
+    const next = scenarios.filter(s => s.id !== id);
+    setScenarios(next);
+    localStorage.setItem('eureka_scenarios', JSON.stringify(next));
+    if (activeTab === id) setActiveTab('BASELINE');
+  };
+
+  const duplicateScenario = (scenario: Scenario) => {
+    const newScenario = {
+      ...scenario,
+      id: crypto.randomUUID(),
+      name: `${scenario.name} (Copy)`,
+      timestamp: new Date().toISOString()
+    };
+    const next = [...scenarios, newScenario];
+    setScenarios(next);
+    localStorage.setItem('eureka_scenarios', JSON.stringify(next));
+    setActiveTab(newScenario.id);
   };
 
   if (loading) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:C.bg,color:C.accent,fontFamily:FONT_SANS}}>INITIALIZING KNOWLEDGE GRAPH...</div>;
@@ -138,6 +180,14 @@ export const DashboardPage = () => {
   const PROJ_RISK = simResults ? simResults.projected_critical_patients : CURRENT_RISK;
   const DELTA = simResults ? Math.abs(simResults.critical_patients_delta) : 0;
   const IS_IMPROVED = simResults ? simResults.critical_patients_delta <= 0 : true;
+
+  const scoreBase = 50;
+  const healthBonus = simResults ? simResults.health_score_delta * 2 : 0;
+  const criticalBonus = simResults ? Math.abs(simResults.critical_patients_delta) / 5 : 0;
+  const decisionScore = simResults ? Math.min(100, Math.max(0, Math.round(scoreBase + healthBonus + criticalBonus))) : 0;
+  let readiness = 'NOT RECOMMENDED';
+  if (decisionScore >= 80) readiness = 'READY';
+  else if (decisionScore >= 60) readiness = 'CAUTION';
 
   const top5Drivers = ov.top_drivers?.slice(0, 5) || [];
   const alternatives = ov.priority_alerts?.slice(1, 4) || [];
@@ -240,9 +290,12 @@ export const DashboardPage = () => {
             <div style={{ marginBottom: 32 }}>
               <div style={{ fontSize: '0.7rem', color: C.accent, marginBottom: 8, fontWeight: 600 }}>TOP ACTION</div>
               <div style={{ fontSize: '1.25rem', fontWeight: 600, color: C.text, marginBottom: 12 }}>{BACTION}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: 12 }}>
                 <div><span style={{color:C.dim, fontSize:'0.7rem', display:'block'}}>EXPECTED IMPACT</span><span style={{color:C.success}}>{DELTA} pts</span></div>
                 <div style={{textAlign:'right'}}><span style={{color:C.dim, fontSize:'0.7rem', display:'block'}}>CONFIDENCE</span>{BCONF}</div>
+              </div>
+              <div style={{ fontSize: '0.65rem', color: C.warning, border: `1px solid ${C.warning}40`, background: `${C.warning}10`, padding: 8, borderRadius: 4 }}>
+                Recommended Action: Derived from latest executive overview. Not recalculated by simulation.
               </div>
             </div>
 
@@ -284,21 +337,44 @@ export const DashboardPage = () => {
             {/* Controls */}
             <div style={{ width: 200, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button onClick={saveScenario} style={{ background: C.surface, border: `1px solid ${C.accent}`, color: C.accent, padding: '12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>SAVE SCENARIO</button>
-              <button style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.muted, padding: '12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>COMPARE ALL</button>
+              <button onClick={() => setCompareMode(!compareMode)} style={{ background: compareMode ? C.surfaceHover : C.surface, border: `1px solid ${compareMode ? C.accent : C.border}`, color: compareMode ? C.text : C.muted, padding: '12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>COMPARE ALL</button>
             </div>
             
             {/* Scenario Details */}
-            <div style={{ flex: 1 }}>
-              {activeTab === 'BASELINE' ? (
-                <div style={{ color: C.muted, fontSize: '0.85rem' }}>Adjust sliders above to create a scenario, then click Save.</div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
-                  {scenarios.find(s => s.id === activeTab)?.modifications.map(m => (
-                    <div key={m.variable} style={{ padding: 16, border: `1px solid ${C.border}`, background: C.surface }}>
-                      <div style={{ fontSize: '0.75rem', color: C.muted }}>{m.variable}</div>
-                      <div style={{ fontSize: '1.5rem', color: m.change_pct < 0 ? C.success : C.critical }}>{m.change_pct}%</div>
+            <div style={{ flex: 1, overflowX: 'auto' }}>
+              {compareMode ? (
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ minWidth: 200, padding: 16, border: `1px solid ${C.border}`, background: C.surface }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 16, color: C.text }}>Baseline</div>
+                    <div style={{ fontSize: '0.75rem', color: C.muted, marginBottom: 4 }}>Critical: <span style={{color:C.text}}>{PATIENTS}</span></div>
+                    <div style={{ fontSize: '0.75rem', color: C.muted, marginBottom: 4 }}>Health: <span style={{color:C.text}}>{HS}</span></div>
+                    <div style={{ fontSize: '0.75rem', color: C.muted, marginBottom: 4 }}>Delta: <span style={{color:C.text}}>0</span></div>
+                  </div>
+                  {scenarios.map(s => (
+                    <div key={s.id} style={{ minWidth: 200, padding: 16, border: `1px solid ${C.border}`, background: C.surface }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 16, color: C.accent }}>{s.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: C.muted, marginBottom: 4 }}>Critical: <span style={{color:C.text}}>{s.results.projected_critical_patients}</span></div>
+                      <div style={{ fontSize: '0.75rem', color: C.muted, marginBottom: 4 }}>Health: <span style={{color:C.text}}>{s.results.projected_health_score}</span></div>
+                      <div style={{ fontSize: '0.75rem', color: C.muted, marginBottom: 4 }}>Delta: <span style={{color: s.results.critical_patients_delta < 0 ? C.success : C.critical}}>{Math.abs(s.results.critical_patients_delta)}</span></div>
                     </div>
                   ))}
+                </div>
+              ) : activeTab === 'BASELINE' ? (
+                <div style={{ color: C.muted, fontSize: '0.85rem' }}>Adjust sliders above to create a scenario, then click Save.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                    <button onClick={() => duplicateScenario(scenarios.find(s=>s.id===activeTab)!)} style={{ background: 'transparent', border: `1px solid ${C.muted}`, color: C.text, padding: '4px 12px', fontSize: '0.65rem', cursor: 'pointer' }}>DUPLICATE</button>
+                    <button onClick={() => deleteScenario(activeTab)} style={{ background: 'transparent', border: `1px solid ${C.critical}`, color: C.critical, padding: '4px 12px', fontSize: '0.65rem', cursor: 'pointer' }}>DELETE</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
+                    {scenarios.find(s => s.id === activeTab)?.modifications.map(m => (
+                      <div key={m.variable} style={{ padding: 16, border: `1px solid ${C.border}`, background: C.surface }}>
+                        <div style={{ fontSize: '0.75rem', color: C.muted }}>{m.variable}</div>
+                        <div style={{ fontSize: '1.5rem', color: m.change_pct < 0 ? C.success : C.critical }}>{m.change_pct}%</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -330,6 +406,30 @@ export const DashboardPage = () => {
           </div>
         </div>
 
+        {/* ROW 4.5: EXECUTION READINESS */}
+        <div style={{ padding: '32px 24px', borderBottom: `1px solid ${C.border}`, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: '0.65rem', color: C.muted, fontWeight: 600, letterSpacing: '0.1em' }}>DECISION SCORE</span>
+            <span style={{ fontSize: '1.75rem', fontWeight: 700, color: decisionScore >= 80 ? C.success : decisionScore >= 60 ? C.warning : C.critical }}>{decisionScore}/100</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: '0.65rem', color: C.muted, fontWeight: 600, letterSpacing: '0.1em' }}>EXECUTION STATUS</span>
+            <span style={{ fontSize: '1.25rem', fontWeight: 600, color: readiness === 'READY' ? C.success : readiness === 'CAUTION' ? C.warning : C.critical, marginTop: 'auto', paddingBottom: 4 }}>{readiness}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: '0.65rem', color: C.muted, fontWeight: 600, letterSpacing: '0.1em' }}>EXPECTED BENEFIT</span>
+            <span style={{ fontSize: '1rem', color: C.text, marginTop: 'auto', paddingBottom: 4 }}>{IS_IMPROVED ? 'Risk Reduction' : 'Risk Increase'}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: '0.65rem', color: C.muted, fontWeight: 600, letterSpacing: '0.1em' }}>AFFECTED POPULATION</span>
+            <span style={{ fontSize: '1rem', color: C.text, marginTop: 'auto', paddingBottom: 4 }}>{DELTA} patients</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: '0.65rem', color: C.muted, fontWeight: 600, letterSpacing: '0.1em' }}>CONFIDENCE</span>
+            <span style={{ fontSize: '1rem', color: C.text, marginTop: 'auto', paddingBottom: 4 }}>{BCONF}</span>
+          </div>
+        </div>
+
         {/* ROW 5: MISSION TIMELINE */}
         <div style={{ padding: '32px 24px', borderBottom: `1px solid ${C.border}`, textAlign: 'center', color: C.dim, fontSize: '0.85rem', fontStyle: 'italic' }}>
           No historical telemetry available
@@ -344,8 +444,15 @@ export const DashboardPage = () => {
             {auditOpen ? '▼ HIDE AUDIT LOGS' : '▶ SHOW SYSTEM AUDIT LOGS'}
           </div>
           {auditOpen && (
-            <div style={{ marginTop: 16, padding: 16, background: C.surface, fontFamily: FONT_MONO, fontSize: '0.75rem', color: C.muted }}>
-              [SYS] {fmtTs(ov.timestamp)} - Payload verified. Sample Size: {ov.ground_truth_audit?.patient_count}.
+            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ padding: 12, background: C.surfaceHover, fontFamily: FONT_MONO, fontSize: '0.75rem', color: C.muted, border: `1px solid ${C.border}` }}>
+                [SYS] {fmtTs(ov.timestamp)} - Baseline loaded. Cases: {PATIENTS}
+              </div>
+              {auditLogs.map(log => (
+                <div key={log.id} style={{ padding: 12, background: C.surface, fontFamily: FONT_MONO, fontSize: '0.75rem', color: C.dim, border: `1px solid ${C.border}` }}>
+                  [{fmtTs(Date.parse(log.timestamp)/1000)}] SIM_EVENT - {log.variable} → Projected: {log.projected} (Delta: {log.delta})
+                </div>
+              ))}
             </div>
           )}
         </div>
