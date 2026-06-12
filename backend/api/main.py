@@ -58,6 +58,7 @@ from backend.api.knowledge_routes import router as knowledge_router
 from backend.api.pdf_routes import router as pdf_router
 from backend.api.explainability_routes import router as explainability_router
 from backend.api.intelligence_routes import router as intelligence_router
+from backend.api.executive_routes import router as executive_router
 app.include_router(cases.router)
 app.include_router(memory.router)
 app.include_router(graph_router)
@@ -65,3 +66,4 @@ app.include_router(knowledge_router)
 app.include_router(pdf_router)
 app.include_router(explainability_router)
 app.include_router(intelligence_router)
+app.include_router(executive_router)
