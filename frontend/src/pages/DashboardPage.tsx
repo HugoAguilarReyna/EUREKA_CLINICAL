@@ -149,16 +149,6 @@ export const DashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* EXECUTIVE HEATMAP */}
-        <div className="bg-[#111] border border-white/10 p-6 rounded-2xl">
-          <h3 className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-6">Executive Heatmap</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {overview.heatmap?.map((domain: any, idx: number) => (
-              <div key={idx} className="bg-black/40 border border-white/5 p-4 rounded-xl">
-                <div className="text-xs text-gray-400 uppercase font-semibold mb-2">{domain.domain}</div>
-                <div className="flex items-end justify-between">
-                  <div className={`text-2xl font-black ${
-                    domain.severity === 'HIGH' ? 'text-red-400' :
                     domain.severity === 'MEDIUM' ? 'text-orange-400' : 'text-emerald-400'
                   }`}>
                     {domain.score}

@@ -5,7 +5,7 @@ import {
   ScatterChart, Scatter, ZAxis 
 } from 'recharts';
 import { useDecisionInsights } from '../../hooks';
-import { CorrelationHeatmap } from './CorrelationHeatmap';
+import { SankeyFlow } from './SankeyFlow';
 import { SankeyFlow } from './SankeyFlow';
 import { BarChart3, PieChart as PieIcon, LineChart as LineIcon, Activity, Grid } from 'lucide-react';
 

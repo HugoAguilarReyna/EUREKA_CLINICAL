@@ -25,6 +25,7 @@ function App() {
       <Route path="/" element={<ExecutiveIntelligencePage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/executive-console" element={<ExecutiveConsolePage />} />
+      <Route path="/decision-os" element={<DecisionOSPage />} />
       <Route path="/ingestion" element={<KnowledgeIngestionPage />} />
       <Route path="/copilot" element={<KnowledgeCopilotPage />} />
       <Route path="/graph" element={<KnowledgeGraphPage />} />
