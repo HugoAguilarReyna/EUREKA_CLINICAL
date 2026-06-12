@@ -116,6 +116,7 @@ export const DashboardPage = () => {
   const PATIENTS = ov.ground_truth_audit?.patient_count ?? 0;
   const DRIVER   = ov.root_cause?.driver ?? '—';
   const DIMPACT  = ov.root_cause?.impact ?? 0;
+  const DPTS     = ov.root_cause?.affected_patients ?? 0;
   const DCONF    = ov.root_cause?.confidence ? `${Math.round(ov.root_cause.confidence*100)}%` : '—';
   
   const BALERT   = ov.priority_alerts?.[0];
