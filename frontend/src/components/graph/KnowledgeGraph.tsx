@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { ForceDirectedGraph } from './ForceDirectedGraph';
 import { GraphNode, GraphEdge } from '../../types/graph';
-import { FileText, AlertTriangle } from 'lucide-react';
+import { FileText, AlertTriangle, ChevronRight, ChevronLeft, Activity, Database, Zap } from 'lucide-react';
 
 interface KnowledgeGraphProps {
   level: number;
@@ -25,13 +25,15 @@ export const KnowledgeGraph = ({
   const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [metadata, setMetadata] = useState<any>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     const fetchGraph = async () => {
       setLoading(true);
       setError(null);
       try {
-        let url = `${import.meta.env.VITE_API_URL}/knowledge/semantic/graph?level=${level}`;
+        let url = `${import.meta.env.VITE_API_URL}/knowledge/semantic/graph?level=${level}&aggregation=true&max_nodes=500&max_edges=2000`;
         
         if (level === 3) {
           if (entityId && entityType) {
@@ -48,8 +50,10 @@ export const KnowledgeGraph = ({
 
         const res = await axios.get(url);
         
-        if (res.data.warning || res.data.metadata?.warning) {
-          setError(res.data.message || "Graph exceeds rendering threshold.");
+        setMetadata(res.data.metadata || null);
+        
+        if (res.data.error) {
+          setError(res.data.error || "Graph failed to load.");
           setNodes([]);
           setEdges([]);
         } else {
@@ -167,14 +171,92 @@ export const KnowledgeGraph = ({
   }
 
   return (
-    <>
-      <ForceDirectedGraph 
-        nodes={nodes} 
-        edges={edges} 
-        visualMode={visualMode} 
-        onExpand={handleNodeExpand}
-        onCollapse={handleNodeCollapse}
-      />
+    <div className="flex h-full w-full relative overflow-hidden">
+      {/* Graph Statistics Sidebar */}
+      <div 
+        className={`absolute top-0 left-0 h-full glassmorphism border-r border-white/10 transition-all duration-300 z-20 flex flex-col ${
+          sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full'
+        }`}
+      >
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <h3 className="text-white font-bold text-sm flex items-center gap-2">
+            <Activity size={16} className="text-blue-400" />
+            Graph Statistics
+          </h3>
+        </div>
+        
+        {sidebarOpen && metadata && (
+          <div className="p-4 space-y-4 overflow-y-auto">
+            {metadata.truncated && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-red-400 font-bold text-xs uppercase tracking-wider">
+                  <AlertTriangle size={14} />
+                  Truncated View
+                </div>
+                <p className="text-gray-300 text-[10px]">
+                  Graph exceeded safety limits. 
+                  Reason: {metadata.reason || 'Payload size limit'}.
+                </p>
+              </div>
+            )}
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-400">Nodes</span>
+                <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded">{metadata.node_count || nodes.length}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-400">Edges</span>
+                <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded">{metadata.edge_count || edges.length}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-400">Communities</span>
+                <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded">{metadata.community_count || 0}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-400">Density</span>
+                <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded">{metadata.density || 0}</span>
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-white/10 space-y-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-400">Payload Size</span>
+                <span className="text-blue-400 font-mono font-bold bg-blue-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                  <Database size={12} />
+                  {metadata.payload_size_mb ? `${metadata.payload_size_mb} MB` : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-400">Aggregation</span>
+                <span className={`font-mono text-xs px-2 py-0.5 rounded font-bold flex items-center gap-1 ${metadata.aggregation_enabled ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                  <Zap size={12} />
+                  {metadata.aggregation_enabled ? 'TACTICAL' : 'OFF'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Sidebar Toggle Button */}
+      <button 
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className={`absolute top-4 z-30 bg-surface border border-white/10 text-gray-400 hover:text-white p-1.5 rounded-r-lg shadow-lg transition-all duration-300 ${
+          sidebarOpen ? 'left-64' : 'left-0'
+        }`}
+      >
+        {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+      </button>
+
+      <div className="flex-1 relative">
+        <ForceDirectedGraph 
+          nodes={nodes} 
+          edges={edges} 
+          visualMode={visualMode} 
+          onExpand={handleNodeExpand}
+          onCollapse={handleNodeCollapse}
+        />
       
       {/* Dynamic Graph Legend based on Visual Mode */}
       <div className="absolute bottom-6 right-6 glassmorphism p-4 rounded-xl text-xs z-10 space-y-2 border border-white/5 shadow-2xl">
@@ -213,6 +295,7 @@ export const KnowledgeGraph = ({
           )}
         </div>
       </div>
-    </>
+      </div>
+    </div>
   );
 };

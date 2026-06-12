@@ -53,107 +53,6 @@ def get_bg_job_manager():
         _bg_job_manager = BackgroundJobManager(db)
     return _bg_job_manager
 
-
-# ============================================================================
-# [PATCHED BY EPIC 10.0B] Missing endpoints added by auto-patch script
-# ============================================================================
-
-@router.post("/initialize")
-async def initialize_system() -> Dict[str, Any]:
-    """Initialize the knowledge system at startup."""
-    try:
-        from backend.infrastructure.mongo_index_manager import MongoIndexManager
-        from pymongo import MongoClient
-        from backend.db.config import settings
-        from backend.graph.client import Neo4jClient
-        from datetime import datetime
-        
-        logger.info("Initializing knowledge system...")
-        
-        mongo_client = MongoClient(settings.mongo_uri)
-        mongo_db = mongo_client[settings.mongo_db_name]
-        
-        # Create MongoDB indexes
-        index_manager = MongoIndexManager(mongo_db)
-        index_results = index_manager.create_all_indexes()
-        logger.info(f"Indexes created: {index_results}")
-        
-        # Verify Neo4j connection
-        try:
-            neo4j = Neo4jClient()
-            with neo4j.session() as session:
-                neo4j_check = session.run("RETURN 'Neo4j OK' AS status").single()
-            neo4j_status = "connected"
-        except Exception as e:
-            logger.warning(f"Neo4j connection check failed: {e}")
-            neo4j_status = "error"
-        
-        # Verify MongoDB connection
-        try:
-            mongo_db.command("ping")
-            mongo_status = "connected"
-        except Exception as e:
-            logger.warning(f"MongoDB connection check failed: {e}")
-            mongo_status = "error"
-        
-        return {
-            "status": "initialized",
-            "neo4j": neo4j_status,
-            "mongo": mongo_status,
-            "indexes": index_results,
-            "timestamp": datetime.now().isoformat(),
-        }
-    
-    except Exception as e:
-        logger.error(f"Initialization failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Initialization failed: {str(e)}")
-
-
-@router.get("/system/indexes")
-async def get_index_stats() -> Dict[str, Any]:
-    """Get MongoDB index statistics."""
-    try:
-        from backend.infrastructure.mongo_index_manager import MongoIndexManager
-        from pymongo import MongoClient
-        from backend.db.config import settings
-        
-        mongo_client = MongoClient(settings.mongo_uri)
-        mongo_db = mongo_client[settings.mongo_db_name]
-        
-        index_manager = MongoIndexManager(mongo_db)
-        return index_manager.get_index_stats()
-    
-    except Exception as e:
-        logger.error(f"Failed to get index stats: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# CRITICAL: This must come BEFORE /jobs/{job_id}
-@router.get("/jobs/summary")
-async def get_jobs_summary() -> Dict[str, Any]:
-    """Get a summary of all background jobs."""
-    try:
-        # Get background job manager from FastAPI routes instance
-        bg_manager = get_bg_job_manager()
-        # Return manual summary since get_job_summary doesn't exist yet
-        collection = bg_manager.jobs_collection
-        queued = collection.count_documents({"status": "queued"})
-        running = collection.count_documents({"status": "running"})
-        completed = collection.count_documents({"status": "completed"})
-        failed = collection.count_documents({"status": "failed"})
-        
-        return {
-            "queued": queued,
-            "running": running,
-            "completed": completed,
-            "failed": failed
-        }
-    except Exception as e:
-        # logger.error(f"Failed to get job summary: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-
 @router.get("/jobs/{job_id}")
 async def get_job_status(job_id: str):
     """
@@ -816,10 +715,7 @@ async def get_semantic_graph(
     community_id: str = None,
     entity_type: str = None,
     entity_id: str = None,
-    depth: int = 1,
-    aggregation: bool = True,
-    max_nodes: int = 500,
-    max_edges: int = 2000
+    depth: int = 1
 ):
     """
     Exposes the extended semantic knowledge graph nodes and edges.
@@ -828,8 +724,6 @@ async def get_semantic_graph(
     from backend.semantic.semantic_graph_builder import SemanticGraphBuilder
     from backend.semantic.graph_abstraction_engine import GraphAbstractionEngine
     from backend.semantic.graph_cache import GraphCache
-    from backend.services.payload_governor import PayloadGovernor
-    from backend.services.graph_metrics_service import GraphMetricsService
     
     cache = GraphCache()
     
@@ -854,8 +748,7 @@ async def get_semantic_graph(
         community_id=community_id,
         entity_type=entity_type,
         entity_id=entity_id,
-        depth=depth,
-        aggregation=aggregation
+        depth=depth
     )
     
     # For Level 2, dynamically compute SIMILAR_TO edges in memory for Similarity Mode
@@ -891,34 +784,19 @@ async def get_semantic_graph(
                             "properties": {"jaccard": jaccard}
                         })
                         
-    PayloadGovernor.MAX_NODES = max_nodes
-    PayloadGovernor.MAX_EDGES = max_edges
-    governed = PayloadGovernor.govern_payload(view.get("nodes", []), view.get("edges", []))
-    
-    metrics = GraphMetricsService.get_graph_metrics(
-        nodes=governed["nodes"],
-        edges=governed["edges"],
-        aggregation_enabled=aggregation,
-        truncated=governed["metadata"]["truncated"],
-        payload_size_bytes=governed["metadata"]["payload_size_bytes"]
-    )
-    
-    metadata = {
-        "level": level,
-        "entity_type": entity_type,
-        "entity_id": entity_id,
-        "depth": depth,
-        "warning": view.get("warning", False) or governed["metadata"]["truncated"],
-        "message": view.get("message", "")
-    }
-    metadata.update(metrics)
-    
     response_data = {
-        "nodes": governed["nodes"],
-        "edges": governed["edges"],
-        "warning": view.get("warning", False) or governed["metadata"]["truncated"],
+        "nodes": view.get("nodes", []),
+        "edges": view.get("edges", []),
+        "warning": view.get("warning", False),
         "message": view.get("message", ""),
-        "metadata": metadata
+        "metadata": {
+            "level": level,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "depth": depth,
+            "warning": view.get("warning", False),
+            "message": view.get("message", "")
+        }
     }
     
     # Save cache for level 3

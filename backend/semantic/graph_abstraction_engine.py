@@ -10,7 +10,8 @@ class GraphAbstractionEngine:
         community_id: Optional[str] = None,
         entity_type: Optional[str] = None,
         entity_id: Optional[str] = None,
-        depth: int = 1
+        depth: int = 1,
+        aggregation: bool = True
     ) -> Dict[str, Any]:
         """
         Slices the rich semantic graph into 3 distinct levels of abstraction:
@@ -25,10 +26,44 @@ class GraphAbstractionEngine:
             filtered_edges = [e for e in edges if e["src_id"] in node_ids and e["dst_id"] in node_ids]
             
         elif level == 2:
-            allowed_labels = {"Patient", "SemanticState", "Rule", "Hypothesis", "Community"}
+            if aggregation:
+                allowed_labels = {"Community", "Rule", "Risk", "Pattern", "Recommendation", "Insight"}
+            else:
+                allowed_labels = {"Patient", "SemanticState", "Rule", "Hypothesis", "Community"}
             
+            community_stats = {}
+            if aggregation:
+                for e in edges:
+                    if e["relationship_type"] == "MEMBER_OF":
+                        c_id = e["dst_id"]
+                        p_id = e["src_id"]
+                        if c_id not in community_stats:
+                            community_stats[c_id] = {
+                                "patient_count": 0,
+                                "patients": set(),
+                                "risk_distribution": {"low": 0, "medium": 0, "high": 0},
+                                "top_rules": set(),
+                                "severity_score": 0.0
+                            }
+                        community_stats[c_id]["patient_count"] += 1
+                        community_stats[c_id]["patients"].add(p_id)
+                
+                for e in edges:
+                    if e["relationship_type"] == "HAS_RISK":
+                        p_id = e["src_id"]
+                        r_id = e["dst_id"]
+                        for c_id, stats in community_stats.items():
+                            if p_id in stats["patients"]:
+                                r_level = "medium"
+                                if "high" in r_id.lower() or "critical" in r_id.lower():
+                                    r_level = "high"
+                                elif "low" in r_id.lower():
+                                    r_level = "low"
+                                stats["risk_distribution"][r_level] += 1
+                                break
+                                
             valid_patients = None
-            if community_id:
+            if community_id and not aggregation:
                 valid_patients = {
                     e["src_id"] for e in edges 
                     if e["relationship_type"] == "MEMBER_OF" and e["dst_id"] == community_id
@@ -40,6 +75,23 @@ class GraphAbstractionEngine:
                     continue
                 if n["label"] == "Patient" and valid_patients is not None and n["id"] not in valid_patients:
                     continue
+                    
+                if aggregation and n["label"] == "Community":
+                    c_id = n["id"]
+                    if c_id in community_stats:
+                        stats = community_stats[c_id]
+                        total_risk = stats["risk_distribution"]["low"] + stats["risk_distribution"]["medium"]*2 + stats["risk_distribution"]["high"]*3
+                        max_risk = max(1, stats["patient_count"] * 3)
+                        stats["severity_score"] = round(total_risk / max_risk, 2) if max_risk > 0 else 0
+                        
+                        import copy
+                        n = copy.deepcopy(n)
+                        if "properties" not in n:
+                            n["properties"] = {}
+                        n["properties"]["patient_count"] = stats["patient_count"]
+                        n["properties"]["risk_distribution"] = stats["risk_distribution"]
+                        n["properties"]["severity_score"] = stats["severity_score"]
+                        n["properties"]["top_rules"] = list(stats["top_rules"])
                 filtered_nodes.append(n)
                 
             node_ids = {n["id"] for n in filtered_nodes}
