@@ -85,8 +85,8 @@ export const KnowledgeGraph = ({
         const existingIds = new Set(prevNodes.map(n => n.id));
         const filteredNew = newNodes.filter((n: any) => !existingIds.has(n.id));
         const merged = [...prevNodes, ...filteredNew];
-        if (merged.length > 150) {
-          setError("Graph exceeds rendering threshold (150 nodes).");
+        if (merged.length > 800) {
+          setError("Graph exceeds rendering threshold (800 nodes).");
           return prevNodes;
         }
         return merged;
@@ -96,8 +96,8 @@ export const KnowledgeGraph = ({
         const existingKeys = new Set(prevEdges.map(e => `${e.src_id}-${e.dst_id}-${e.relationship_type}`));
         const filteredNew = newEdges.filter((e: any) => !existingKeys.has(`${e.src_id}-${e.dst_id}-${e.relationship_type}`));
         const merged = [...prevEdges, ...filteredNew];
-        if (merged.length > 300) {
-          setError("Graph exceeds rendering threshold (300 edges).");
+        if (merged.length > 1500) {
+          setError("Graph exceeds rendering threshold (1500 edges).");
           return prevEdges;
         }
         return merged;

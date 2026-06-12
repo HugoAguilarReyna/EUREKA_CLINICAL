@@ -101,10 +101,9 @@ class GraphAbstractionEngine:
             # queue element: (node_id, current_depth)
             queue = deque([(entity_id, 0)])
             discovered_depths = {entity_id: 0}
-            
             MAX_DEPTH = 3
-            MAX_NODES = 150
-            MAX_EDGES = 300
+            MAX_NODES = 800
+            MAX_EDGES = 1500
             
             while queue:
                 curr_id, curr_depth = queue.popleft()
