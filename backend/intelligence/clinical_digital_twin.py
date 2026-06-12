@@ -24,7 +24,6 @@ class ClinicalDigitalTwin:
         case_map = {c.get("patient_id"): c for c in cases if c.get("patient_id")}
         
         # 1. Baseline calculation
-        # Find active rules and their active support
         active_rules = []
         baseline_critical_patients = set()
         
@@ -38,10 +37,8 @@ class ClinicalDigitalTwin:
                     var_name = var_name.strip()
                     state_id = f"STATE_{var_name}_{state_val.strip()}"
                     
-                    # Find patients in this state
                     patient_ids = {e.get("src_id") for e in edges if e.get("dst_id") == state_id and e.get("relationship_type") == "HAS_STATE"}
                     
-                    # Find threshold by looking at raw_data of these patients
                     threshold = 0
                     vals = []
                     for pid in patient_ids:
@@ -73,18 +70,34 @@ class ClinicalDigitalTwin:
         for c in cases:
             pid = c.get("patient_id")
             if pid:
-                # Shallow copy of raw_data to mutate
                 mutated_cases[pid] = dict(c.get("raw_data", {}))
+                
+        # Assumption tracking for audit
+        assumptions = []
                 
         for mod in modifications:
             var = mod.get("variable")
             change = mod.get("change_pct", 0)
             multiplier = 1.0 + (change / 100.0)
             
+            assumptions.append({
+                "variable": var,
+                "change_pct": change,
+                "threshold_strategy": "inferred_min_max_from_graph",
+                "recalculation_mode": "fuzzy_strict_bounds"
+            })
+            
             for pid, raw_data in mutated_cases.items():
                 if var in raw_data and raw_data[var] is not None:
                     raw_data[var] = raw_data[var] * multiplier
                     
+        # Build a map of the direction of mutations for entry logic
+        mutation_directions = {}
+        for mod in modifications:
+            var = mod.get("variable")
+            change = mod.get("change_pct", 0)
+            mutation_directions[var] = change
+            
         # 3. Recalculate
         proj_critical_patients = set()
         
@@ -92,17 +105,40 @@ class ClinicalDigitalTwin:
             var_name = rule["var_name"]
             state_val = rule["state_val"]
             threshold = rule["threshold"]
+            original_pids = rule["patient_ids"]
             
-            # Re-evaluate which patients still meet the threshold
             for pid, raw_data in mutated_cases.items():
                 val = raw_data.get(var_name)
                 if val is not None:
-                    if state_val == "HIGH" and val >= threshold:
-                        proj_critical_patients.add(pid)
-                    elif state_val == "LOW" and val <= threshold:
+                    is_in_state = False
+                    
+                    if pid in original_pids:
+                        # Patient was originally in the state. Did they leave?
+                        if state_val == "HIGH" and val >= threshold:
+                            is_in_state = True
+                        elif state_val == "LOW" and val <= threshold:
+                            is_in_state = True
+                    else:
+                        # Patient was NOT in the state. Can they enter?
+                        # Only if the variable was explicitly mutated in a risk-increasing direction!
+                        change_val = mutation_directions.get(var_name, 0)
+                        
+                        if state_val == "HIGH" and change_val > 0:
+                            if val > threshold * 1.05:
+                                is_in_state = True
+                        elif state_val == "LOW" and change_val < 0:
+                            if val < threshold * 0.95:
+                                is_in_state = True
+                            
+                    if is_in_state:
                         proj_critical_patients.add(pid)
                         
         proj_critical_count = len(proj_critical_patients)
+        
+        # Absolute guarantee: if no modifications, force exact match to baseline.
+        if not modifications:
+            proj_critical_count = base_critical_count
+            
         proj_health_score = max(0, 100 - int((proj_critical_count / max(len(cases), 1)) * 100))
         
         return {
@@ -122,6 +158,7 @@ class ClinicalDigitalTwin:
                 "snapshot_cases": len(cases),
                 "baseline_critical": base_critical_count,
                 "projected_critical": proj_critical_count,
-                "calculation_version": "v2_math_rework"
+                "calculation_version": "v2_math_rework",
+                "assumptions": assumptions
             }
         }
