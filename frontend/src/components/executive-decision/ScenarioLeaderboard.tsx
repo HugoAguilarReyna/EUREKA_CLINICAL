@@ -1,135 +1,140 @@
-import React, { useState } from 'react';
-import { C, FONT } from './decision-panel.styles';
+import React from 'react';
 import { Scenario } from '../../types/twin-simulator';
+import { calculateInterventionScore, getReadiness } from '../../hooks/useDecisionEngine';
 
 interface ScenarioLeaderboardProps {
+  baselineOverview: any;
   scenarios: Scenario[];
-  onSelect: (scenario: Scenario) => void;
+  onLoadScenario: (s: Scenario) => void;
+  onDeleteScenario: (id: string) => void;
+  onDuplicateScenario: (s: Scenario) => void;
   onClose: () => void;
-  onCombine?: () => void;
-  onNew?: () => void;
 }
 
-export const ScenarioLeaderboard: React.FC<ScenarioLeaderboardProps> = ({
-  scenarios,
-  onSelect,
-  onClose,
-  onCombine,
-  onNew
+const C = {
+  bg: '#05080F', panel: '#0B1220', panelHover: '#111827',
+  border: 'rgba(255,255,255,0.08)', textPrimary: '#F8FAFC', 
+  textMuted: '#94A3B8', textDim: '#475569', 
+  success: '#22C55E', warning: '#F59E0B', critical: '#EF4444',
+  accent: '#3B82F6'
+};
+
+export const ScenarioLeaderboard: React.FC<ScenarioLeaderboardProps> = ({ 
+  baselineOverview, scenarios, onLoadScenario, onDeleteScenario, onDuplicateScenario, onClose 
 }) => {
-  const [sortCol, setSortCol] = useState<'score' | 'impact' | 'confidence'>('score');
+  if (scenarios.length === 0) {
+    return (
+      <div style={{ padding: '32px 48px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ color: C.textDim }}>No saved scenarios yet. Modify a variable and save it to compare.</div>
+        <button onClick={onClose} style={{ background: 'transparent', border: `1px solid ${C.border}`, color: C.textPrimary, padding: '8px 16px', borderRadius: 4, cursor: 'pointer' }}>Close Compare</button>
+      </div>
+    );
+  }
 
-  const calculateScore = (imp: number, conf: number) => {
-    const iCont = Math.min(1.0, Math.abs(imp) / 100);
-    return Math.round((iCont * 40) + (conf * 30) + (1.0 * 20) + (1.0 * 10));
-  };
+  // Calculate scores uniformly using the Decision Engine's exported function
+  const scoredScenarios = scenarios.map(s => {
+    const pDelta = s.results.critical_patients_delta;
+    const hDelta = s.results.health_score_delta;
+    const rDelta = s.results.critical_risks_delta;
+    
+    const interventionScore = calculateInterventionScore(pDelta, hDelta, rDelta);
 
-  const enhancedScenarios = scenarios.map(s => {
-    const score = calculateScore(s.results.critical_patients_delta, s.results.confidence);
-    return { ...s, decisionScore: score };
-  });
+    // To calculate the full Decision Score for a scenario, we must know what driver it intervened on
+    const simulatedDriver = s.modifications[0]?.variable || '';
+    const alerts = baselineOverview?.priority_alerts || [];
+    
+    const maxPriority = alerts.reduce((max: number, a: any) => Math.max(max, a.priority_score || 0), 0.001);
+    
+    // Calculate the score of the top action if this scenario is executed
+    const dynamicActions = alerts.map((a: any) => {
+      const clinicalScore = ((a.priority_score || 0) / maxPriority) * 100;
+      let effectiveInterventionScore = 50;
+      if (a.title.toUpperCase().includes(simulatedDriver.toUpperCase())) {
+        effectiveInterventionScore = interventionScore;
+      }
+      return (clinicalScore * 0.60) + (effectiveInterventionScore * 0.40);
+    });
 
-  const sortedScenarios = [...enhancedScenarios].sort((a, b) => {
-    if (sortCol === 'score') return b.decisionScore - a.decisionScore;
-    if (sortCol === 'impact') return a.results.critical_patients_delta - b.results.critical_patients_delta; // more negative is better
-    if (sortCol === 'confidence') return b.results.confidence - a.results.confidence;
-    return 0;
-  });
+    const topDecisionScore = Math.max(...dynamicActions);
 
-  const getMedal = (index: number) => {
-    if (index === 0) return '🥇';
-    if (index === 1) return '🥈';
-    if (index === 2) return '🥉';
-    return `${index + 1}`;
-  };
-
-  const getStatus = (score: number) => {
-    if (score >= 85) return <span style={{ color: C.success }}>✓ READY</span>;
-    if (score >= 70) return <span style={{ color: C.warning }}>⚠ CAUTION</span>;
-    return <span style={{ color: C.critical }}>✗ BLOCKED</span>;
-  };
+    return {
+      ...s,
+      decisionScore: topDecisionScore,
+      readiness: getReadiness(topDecisionScore)
+    };
+  }).sort((a, b) => b.decisionScore - a.decisionScore); // Sort by DDE Score
 
   return (
-    <div style={{ padding: '2rem 24px', background: C.bg, fontFamily: FONT.sans }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div style={{ color: C.textPrimary, fontSize: '1.25rem', fontWeight: 600 }}>SCENARIO COMPARISON & LEADERBOARD</div>
-        <button onClick={onClose} style={{ background: 'transparent', border: `1px solid ${C.border}`, color: C.textMuted, padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem' }}>CLOSE</button>
+    <div style={{ padding: '32px 48px', borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h3 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: C.textDim, letterSpacing: '0.1em' }}>
+          SCENARIO LEADERBOARD (DDE SCORED)
+        </h3>
+        <button onClick={onClose} style={{ background: 'transparent', border: `1px solid ${C.border}`, color: C.textPrimary, padding: '8px 16px', borderRadius: 4, cursor: 'pointer' }}>
+          Exit Compare
+        </button>
       </div>
 
-      <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden', marginBottom: '2rem' }}>
-        {/* Header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '80px 2fr 1fr 1fr 1fr 1fr', padding: '1rem', background: C.panel, borderBottom: `1px solid ${C.border}`, color: C.textDim, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em' }}>
-          <div>RANK</div>
-          <div>SCENARIO</div>
-          <div onClick={() => setSortCol('impact')} style={{ cursor: 'pointer', textDecoration: sortCol === 'impact' ? 'underline' : 'none' }}>IMPACT</div>
-          <div onClick={() => setSortCol('confidence')} style={{ cursor: 'pointer', textDecoration: sortCol === 'confidence' ? 'underline' : 'none' }}>CONFIDENCE</div>
-          <div onClick={() => setSortCol('score')} style={{ cursor: 'pointer', textDecoration: sortCol === 'score' ? 'underline' : 'none' }}>DECISION SCORE</div>
-          <div>STATUS</div>
-        </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr style={{ borderBottom: `1px solid ${C.border}`, color: C.textDim, fontSize: '0.75rem', letterSpacing: '0.05em' }}>
+              <th style={{ padding: '12px 16px' }}>RANK</th>
+              <th style={{ padding: '12px 16px' }}>SCENARIO</th>
+              <th style={{ padding: '12px 16px' }}>INTERVENTION</th>
+              <th style={{ padding: '12px 16px', textAlign: 'right' }}>IMPACT (PTS)</th>
+              <th style={{ padding: '12px 16px', textAlign: 'right' }}>HEALTH Δ</th>
+              <th style={{ padding: '12px 16px', textAlign: 'right' }}>RISK Δ</th>
+              <th style={{ padding: '12px 16px', textAlign: 'right' }}>DDE SCORE</th>
+              <th style={{ padding: '12px 16px', textAlign: 'center' }}>READINESS</th>
+              <th style={{ padding: '12px 16px', textAlign: 'right' }}>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scoredScenarios.map((s, idx) => {
+              const pDelta = s.results.critical_patients_delta;
+              const hDelta = s.results.health_score_delta;
+              const rDelta = s.results.critical_risks_delta;
+              const isImproved = pDelta <= 0;
+              
+              let readColor = C.warning;
+              if (s.readiness === "READY FOR EXECUTION") readColor = C.success;
+              if (s.readiness === "NOT RECOMMENDED") readColor = C.critical;
 
-        {/* Rows */}
-        <div style={{ background: C.panel }}>
-          {sortedScenarios.map((s, index) => {
-            const isWinner = index === 0;
-            return (
-              <div 
-                key={s.id} 
-                onClick={() => onSelect(s)}
-                style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: '80px 2fr 1fr 1fr 1fr 1fr', 
-                  padding: '1rem', 
-                  borderBottom: `1px solid ${C.border}`,
-                  background: isWinner ? 'rgba(245, 158, 11, 0.05)' : 'transparent',
-                  cursor: 'pointer',
-                  alignItems: 'center',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={e => { if (!isWinner) e.currentTarget.style.background = C.bg; }}
-                onMouseLeave={e => { if (!isWinner) e.currentTarget.style.background = 'transparent'; }}
-              >
-                <div style={{ fontSize: '1.25rem', textAlign: 'center', width: 40 }}>{getMedal(index)}</div>
-                
-                <div>
-                  <div style={{ color: C.textPrimary, fontWeight: 600, marginBottom: '0.25rem' }}>{s.name}</div>
-                  {s.modifications.map(m => (
-                    <div key={m.variable} style={{ fontSize: '0.75rem', color: C.textMuted }}>{m.variable} {m.change_pct > 0 ? `+${m.change_pct}` : m.change_pct}%</div>
-                  ))}
-                </div>
-                
-                <div style={{ color: s.results.critical_patients_delta <= 0 ? C.success : C.critical, fontWeight: 600 }}>
-                  {s.results.critical_patients_delta} pts
-                </div>
-                
-                <div style={{ color: C.textPrimary }}>
-                  {Math.round(s.results.confidence * 100)}%
-                </div>
-                
-                <div style={{ color: C.textPrimary, fontSize: '1.25rem', fontWeight: 600 }}>
-                  {s.decisionScore}
-                </div>
-                
-                <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                  {getStatus(s.decisionScore)}
-                </div>
-              </div>
-            );
-          })}
-          
-          {sortedScenarios.length === 0 && (
-            <div style={{ padding: '2rem', textAlign: 'center', color: C.textMuted, fontSize: '0.9rem' }}>
-              No scenarios available for comparison.
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        {sortedScenarios.length > 0 && (
-          <button onClick={() => onSelect(sortedScenarios[0])} style={{ background: C.accent, color: '#fff', border: 'none', padding: '0.75rem 1.5rem', fontWeight: 600, borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem' }}>SELECT {sortedScenarios[0].name.toUpperCase()}</button>
-        )}
-        <button onClick={onCombine} style={{ background: 'transparent', color: C.textPrimary, border: `1px solid ${C.border}`, padding: '0.75rem 1.5rem', fontWeight: 600, borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem' }}>COMBINE WITH A</button>
-        <button onClick={onNew} style={{ background: 'transparent', color: C.textPrimary, border: `1px solid ${C.border}`, padding: '0.75rem 1.5rem', fontWeight: 600, borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem' }}>NEW SCENARIO</button>
+              return (
+                <tr key={s.id} style={{ borderBottom: `1px solid ${C.border}`, background: idx === 0 ? 'rgba(59, 130, 246, 0.05)' : 'transparent' }}>
+                  <td style={{ padding: '16px', fontSize: '1.25rem', fontWeight: 700, color: idx === 0 ? C.accent : C.textDim }}>#{idx + 1}</td>
+                  <td style={{ padding: '16px', fontWeight: 600, color: C.textPrimary }}>{s.name}</td>
+                  <td style={{ padding: '16px', fontSize: '0.85rem', color: C.textMuted }}>
+                    {s.modifications.map(m => `${m.variable} ${m.change_pct > 0 ? '+' : ''}${m.change_pct}%`).join(', ')}
+                  </td>
+                  <td style={{ padding: '16px', textAlign: 'right', fontWeight: 600, color: isImproved ? C.success : C.critical }}>
+                    {pDelta > 0 ? '+' : ''}{pDelta}
+                  </td>
+                  <td style={{ padding: '16px', textAlign: 'right', color: hDelta >= 0 ? C.success : C.critical }}>
+                    {hDelta > 0 ? '+' : ''}{hDelta}
+                  </td>
+                  <td style={{ padding: '16px', textAlign: 'right', color: rDelta <= 0 ? C.success : C.critical }}>
+                    {rDelta > 0 ? '+' : ''}{rDelta}
+                  </td>
+                  <td style={{ padding: '16px', textAlign: 'right', fontWeight: 700, color: C.textPrimary, fontSize: '1.125rem' }}>
+                    {s.decisionScore.toFixed(1)}
+                  </td>
+                  <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, color: readColor }}>
+                    {s.readiness}
+                  </td>
+                  <td style={{ padding: '16px', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <button onClick={() => onLoadScenario(s)} style={{ background: C.accent, border: 'none', color: '#fff', padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Load</button>
+                      <button onClick={() => onDuplicateScenario(s)} style={{ background: C.surfaceHover, border: `1px solid ${C.border}`, color: C.textPrimary, padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: '0.75rem' }}>Copy</button>
+                      <button onClick={() => onDeleteScenario(s.id)} style={{ background: 'transparent', border: `1px solid ${C.border}`, color: C.critical, padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: '0.75rem' }}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

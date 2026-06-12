@@ -4,6 +4,7 @@ import { useTwinSimulator } from '../hooks/useTwinSimulator';
 import { VariableSlider } from '../components/twin-simulator/VariableSlider';
 import { Scenario, Modification } from '../types/twin-simulator';
 
+import { useDecisionEngine } from '../hooks/useDecisionEngine';
 import { ExecutiveDecisionPanel } from '../components/executive-decision/ExecutiveDecisionPanel';
 import { DecisionIntelligenceCards } from '../components/executive-decision/DecisionIntelligenceCards';
 import { ScenarioLeaderboard } from '../components/executive-decision/ScenarioLeaderboard';
@@ -36,6 +37,9 @@ export const DashboardPage = () => {
   const [compareMode, setCompareMode] = useState(false);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [auditOpen, setAuditOpen] = useState(false);
+
+  // Initialize unified Decision Engine
+  const engine = useDecisionEngine(ov, simResults, modifications);
 
   // Fetch initial data
   useEffect(() => {
@@ -170,13 +174,13 @@ export const DashboardPage = () => {
   const STATUS   = ov.mission_status;
   const HS       = ov.health_score;
   const PATIENTS = ov.ground_truth_audit?.patient_count ?? 0;
-  const DRIVER   = ov.root_cause?.driver ?? '—';
+  const DRIVER   = engine.recommendedAction?.title || '—'; // Changed to dynamically point to recommended action
   const BALERT   = ov.priority_alerts?.[0];
-  const BACTION  = BALERT?.title ?? '—';
+  const BACTION  = engine.recommendedAction?.title || '—'; // Changed to dynamically point to recommended action
   const UPDATED  = fmtTs(ov.timestamp);
   
-  const DELTA = simResults ? Math.abs(simResults.critical_patients_delta) : 0;
-  const IS_IMPROVED = simResults ? simResults.critical_patients_delta <= 0 : true;
+  const DELTA = Math.abs(engine.metrics.patientsDelta);
+  const IS_IMPROVED = engine.metrics.patientsDelta <= 0;
 
   const top5Drivers = ov.top_drivers?.slice(0, 5) || [];
 
@@ -193,15 +197,12 @@ export const DashboardPage = () => {
             <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>STATUS</span><span style={{color: STATUS==='RED'?C.warning:C.success}}>{STATUS}</span></div>
             <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>HEALTH</span><span>{HS}</span></div>
             <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>CRITICAL</span><span>{PATIENTS}</span></div>
-            <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>PRIMARY</span><span style={{color:C.warning}}>{DRIVER}</span></div>
-            <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>ACTION</span><span style={{color:C.accent}}>{BACTION}</span></div>
+            <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>ACTION</span><span style={{color:C.accent}}>{BACTION.toUpperCase()}</span></div>
             <div style={{ display: 'flex', gap: 12 }}><span style={{color:C.muted}}>IMPACT</span><span style={{color: IS_IMPROVED ? C.success : C.critical}}>{DELTA} pts</span></div>
             <div style={{ display: 'flex', gap: 12 }}>
               <span style={{color:C.muted}}>CONFIDENCE</span>
               <span>
-                {typeof (simResults?.confidence ?? BALERT?.confidence) === 'number' 
-                  ? `${Math.round((simResults?.confidence ?? BALERT?.confidence) * 100)}%` 
-                  : '—'}
+                {engine.recommendedAction?.decisionScore ? `${engine.recommendedAction.decisionScore.toFixed(0)}%` : '—'}
               </span>
             </div>
           </div>
@@ -211,7 +212,7 @@ export const DashboardPage = () => {
         {/* DOMINANT: EXECUTIVE DECISION PANEL */}
         <ExecutiveDecisionPanel 
           baselineOverview={ov}
-          currentSimulation={simResults}
+          engine={engine}
           allScenarios={scenarios}
           onAccept={() => alert('Executing recommendation...')}
           onExplore={() => setCompareMode(true)}
@@ -221,7 +222,7 @@ export const DashboardPage = () => {
         {/* THREE DECISION CARDS */}
         <DecisionIntelligenceCards 
           baselineOverview={ov}
-          currentSimulation={simResults}
+          engine={engine}
         />
 
         {/* COMPARE MODE (OPTIONAL, but sits above twin workspace when active) */}
@@ -330,6 +331,11 @@ export const DashboardPage = () => {
               </div>
             </div>
           )}
+        </div>
+
+        {/* BUILD VERSION */}
+        <div style={{ padding: '16px 24px', textAlign: 'center', fontSize: '0.65rem', color: C.dim, fontFamily: FONT_MONO, borderTop: `1px solid ${C.border}` }}>
+          BUILD_VERSION: e9b2c742179095afbd6c6b22a502c4274e0d6864 (EPIC 16)
         </div>
 
       </div>
